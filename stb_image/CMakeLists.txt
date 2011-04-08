@@ -1,0 +1,1 @@
+ADD_LIBRARY(stb_image SHARED "stb_image.c")

@@ -1,0 +1,1 @@
+/usr/bin/c++   -g   CMakeFiles/karel.dir/main.cpp.o  -o karel -rdynamic -lGLU -lGL -lSM -lICE -lX11 -lXext -Wl,-Bstatic -lSDLmain -Wl,-Bdynamic -lSDL -lpthread objTester/libobjLoader.so stb_image/libstb_image.so -Wl,-rpath,/home/david/skola/opengl/karel/build/objTester:/home/david/skola/opengl/karel/build/stb_image 

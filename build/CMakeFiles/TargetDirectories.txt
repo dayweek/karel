@@ -1,0 +1,3 @@
+/home/david/skola/opengl/karel/build/CMakeFiles/karel.dir
+/home/david/skola/opengl/karel/build/objTester/CMakeFiles/objLoader.dir
+/home/david/skola/opengl/karel/build/stb_image/CMakeFiles/stb_image.dir

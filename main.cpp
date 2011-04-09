@@ -1,5 +1,6 @@
 #include <iostream>
 #include <SDL/SDL.h>
+#include <SDL/SDL_ttf.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <objLoader.h>
@@ -33,7 +34,7 @@ vector<char> getDigits(float fps) {
 	return vec;
 }
 
-void renderText() {
+void render_text() {
 	
 	glDisable(GL_DEPTH_TEST);
 glMatrixMode(GL_PROJECTION);
@@ -237,7 +238,7 @@ static void draw_screen( void )
 	glTranslatef(timeMile/50 - 10,0,0);
 // 	glutWireCube(2.0);
 	glCallList(1);
-	//renderText();
+	render_text();
 	renderImage();
 	glFlush();
 

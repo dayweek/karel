@@ -3,6 +3,11 @@
 *.swp
 *.*~
 *thumbs.db
+*.cmake
+
+/build/CMakeFiles/
+/build/karel
+/build/CMakeCache.txt
 
 # compiled object files
 *.o
@@ -12,9 +17,3 @@
 
 # compiled static libraries
 *.a
-result_cam1.png
-result_cam2.png
-result_ex3_1.png
-result_ex3_2.png
-result_ex3_3.png
-result_ex3_4.png

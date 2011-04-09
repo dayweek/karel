@@ -9,7 +9,7 @@
 #include <algorithm>
 #include "stb_image.h"
 
-
+TTF_Font *font;
 
 using namespace std;
 objLoader *objData;
@@ -57,6 +57,13 @@ glPopMatrix();
 glMatrixMode(GL_PROJECTION);
 glPopMatrix();
 
+}
+
+void load_font() {
+    font = TTF_OpenFont("Ubuntu-R.ttf", 16);
+    if (!font) {
+        cerr << "TTF_OpenFont: \n" << TTF_GetError();
+    }
 }
 
 void loadTexture() {
@@ -151,7 +158,9 @@ static void quit( int code )
      * mode and restore the previous video settings,
      * etc.
      */
-    SDL_Quit( );
+    TTF_CloseFont(font);
+    TTF_Quit();
+    SDL_Quit();
     	delete(objData);
 	glDeleteTextures( 1, &texture );
 
@@ -330,6 +339,15 @@ int main( int argc, char* argv[] )
              SDL_GetError( ) );
         quit( 1 );
     }
+    
+
+    if (TTF_Init()==-1) {
+        cerr << "TTF_Init: \n" << TTF_GetError();
+        SDL_Quit( );
+        exit(1);
+    }
+    load_font();
+   
 
     /* Let's get some video information. */
     info = SDL_GetVideoInfo( );

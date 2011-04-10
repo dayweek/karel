@@ -1,4 +1,5 @@
 #include <iostream>
+#include <math.h>
 #include <SDL/SDL.h>
 #include <SDL/SDL_ttf.h>
 #include <GL/gl.h>
@@ -9,7 +10,7 @@
 #include <algorithm>
 #include "stb_image.h"
 
-
+int next_power(int x) { return pow(2, ceil(log(x)/log(2))); }
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
     Uint32 rmask = 0xff000000;
@@ -67,13 +68,15 @@ void render_text() {
 
     SDL_PixelFormat *format;
     SDL_Color color={0,255,0};
-    if (i_surface=TTF_RenderText_Blended(font,"Hello World!",color)) {
-        o_surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 128, 128, 32,
+    if (i_surface=TTF_RenderUTF8_Blended(font,"eoueo",color)) {
+	int w = next_power(i_surface->w);
+	int h = next_power(i_surface->h);
+        o_surface = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 32,
                                          rmask, gmask, bmask, amask);
         SDL_BlitSurface(i_surface, 0, o_surface, 0);
         glGenTextures(1, &text_texture);
         glBindTexture( GL_TEXTURE_2D, text_texture );
-        glTexImage2D(GL_TEXTURE_2D, 0, 4, o_surface->w, o_surface->h, 0, GL_BGRA, GL_UNSIGNED_BYTE, o_surface->pixels);
+        glTexImage2D(GL_TEXTURE_2D, 0, 4, w, h, 0, GL_BGRA, GL_UNSIGNED_BYTE, o_surface->pixels);
 // when texture area is small, bilinear filter the closest mipmap
         glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
                          GL_LINEAR );
@@ -89,12 +92,12 @@ void render_text() {
         glVertex3f(0.0f,0,-1);
 
         glTexCoord2f(0.0f, 0.0f);
-        glVertex3f(0.0f, 40, -1);
+        glVertex3f(0.0f, h, -1);
 
         glTexCoord2f(1.0f, 0.0f);
-        glVertex3f(100.0f, 40, -1);
+        glVertex3f(w, h, -1);
         glTexCoord2f(1.0f, 1.0f);
-        glVertex3f(100.0f, 0.0f, -1);
+        glVertex3f(w, 0.0f, -1);
         glEnd();
         glDeleteTextures(1, &text_texture);
         SDL_FreeSurface(i_surface);

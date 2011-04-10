@@ -26,7 +26,7 @@ int next_power(int x) { return pow(2, ceil(log(x)/log(2))); }
 
 
 TTF_Font *font;
-
+int countp = 0;
 using namespace std;
 objLoader *objData;
 Uint32 globalTime = 0;
@@ -35,22 +35,22 @@ Uint32 timeMile = 0;
 float framesToPrint = 0.0;
 GLuint texture;
 
-vector<char> getDigits(float fps) {
+string getDigits(float fps) {
     int f = fps;
-    vector<char> vec;
+    string digits;
     stringstream str;
     char c;
     while (f != 0) {
         str << (f % 10);
         str.get(c);
-        vec.push_back(c);
+        digits += c;
         f /= 10;
     }
-    reverse(vec.begin(), vec.end());
-    return vec;
+    reverse(digits.begin(), digits.end());
+    return digits;
 }
 
-void render_text() {
+void render_text(const string text) {
 
     glDisable(GL_DEPTH_TEST);
     glMatrixMode(GL_PROJECTION);
@@ -68,7 +68,7 @@ void render_text() {
 
     SDL_PixelFormat *format;
     SDL_Color color={0,255,0};
-    if (i_surface=TTF_RenderUTF8_Blended(font,"eoueo",color)) {
+    if (i_surface=TTF_RenderUTF8_Blended(font,text.c_str(),color)) {
 	int w = next_power(i_surface->w);
 	int h = next_power(i_surface->h);
         o_surface = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 32,
@@ -105,7 +105,7 @@ void render_text() {
         //SDL_FreeSurface(on_surface);
 
     } else
-        cerr << "ne";
+        cerr << "cannot render font";
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
 
@@ -274,6 +274,7 @@ static void draw_screen( void )
     if (globalTime - timeMile > 100) {
         framesToPrint = frame/(globalTime - timeMile)*1000;
         timeMile = globalTime;
+	countp++;
         frame = 0;
     }
 
@@ -298,7 +299,11 @@ static void draw_screen( void )
     glTranslatef(timeMile/50 - 10,0,0);
 // 	glutWireCube(2.0);
     glCallList(1);
-    render_text();
+    if(countp == 10) {
+	cout << framesToPrint << " " << "FPS" << endl;
+	countp = 0;
+    }
+    render_text(getDigits(framesToPrint));
     //renderImage();
     glFlush();
 

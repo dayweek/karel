@@ -1,1 +1,0 @@
-/usr/bin/c++  -fPIC -g  -shared -Wl,-soname,libobjLoader.so -o libobjLoader.so CMakeFiles/objLoader.dir/obj_parser.cpp.o CMakeFiles/objLoader.dir/list.cpp.o CMakeFiles/objLoader.dir/objTester.cpp.o CMakeFiles/objLoader.dir/string_extra.cpp.o CMakeFiles/objLoader.dir/objLoader.cpp.o 

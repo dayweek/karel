@@ -35,3 +35,6 @@ Remote GDB Shell Script=
 Try Setting Breakpoints On Loading Libraries=true
 Working Directory=file:///home/david/skola/opengl/karel/build
 isExecutable=true
+
+[Project]
+VersionControlSupport=kdevgit

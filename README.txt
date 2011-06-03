@@ -4,6 +4,7 @@ Prerequsities (on Ubuntu):
 gcc
 cmake >= 2.8.2
 libsdl1.2.dev
+libsdl-ttf2.0-dev
 
 and an openGL capable card.
 

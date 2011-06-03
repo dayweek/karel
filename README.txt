@@ -9,7 +9,7 @@ libsdl-ttf2.0-dev
 and an openGL capable card.
 
 Compilation: In the same directory where this README is run:
-cmake && make
+cmake CMakeLists.txt && make
 
 To execute:
 ./build/karel

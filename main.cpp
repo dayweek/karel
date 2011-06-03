@@ -1,7 +1,11 @@
 #include <iostream>
 #include <math.h>
 #include <SDL/SDL.h>
-#include <SDL/SDL_ttf.h>
+#ifdef CROSS
+  #include <SDL_ttf.h>
+#else
+  #include <SDL/SDL_ttf.h>
+#endif
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <objLoader.h>
@@ -82,7 +86,7 @@ void render_text ( const string text ) {
                     ( ( Uint32* ) o_surface->pixels ) [i*w+ii] = ( ( Uint32* ) o_surface->pixels ) [i*w+ii] | 0xff000000;
         glGenTextures ( 1, &text_texture );
         glBindTexture ( GL_TEXTURE_2D, text_texture );
-        glTexImage2D ( GL_TEXTURE_2D, 0, 4, w, h, 0, GL_BGRA, GL_UNSIGNED_BYTE, o_surface->pixels );
+        glTexImage2D ( GL_TEXTURE_2D, 0, 4, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, o_surface->pixels );
 // when texture area is small, bilinear filter the closest mipmap
         glTexParameterf ( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
                           GL_LINEAR );

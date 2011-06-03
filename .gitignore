@@ -5,9 +5,10 @@
 *thumbs.db
 *.cmake
 
-/build/CMakeFiles/
 /build/karel
 /build/CMakeCache.txt
+
+CMakeFiles/
 
 # compiled object files
 *.o

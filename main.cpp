@@ -137,8 +137,8 @@ void load_font() {
     }
 }
 
+//TODO mipmap
 void load_texture(string filename, GLuint* texture) {
-//load image
 
     int x,y,n;
     GLint tmp;
@@ -301,7 +301,9 @@ static void process_events ( void ) {
 
 void draw_crate() {
     glBindTexture(GL_TEXTURE_2D, crate_texture);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     glBegin ( GL_QUADS);
+    glNormal3f(0,0,1);
     // Front Face
     glTexCoord2f(0.0f, 0.0f);
     glVertex3f(-1.0f, -1.0f,  1.0f);	// Bottom Left Of The Texture and Quad
@@ -312,6 +314,7 @@ void draw_crate() {
     glTexCoord2f(0.0f, 1.0f);
     glVertex3f(-1.0f,  1.0f,  1.0f);	// Top Left Of The Texture and Quad
 // 		Back Face
+    glNormal3f(0,0,-1);
     glTexCoord2f(1.0f, 0.0f);
     glVertex3f(-1.0f, -1.0f, -1.0f);	// Bottom Right Of The Texture and Quad
     glTexCoord2f(1.0f, 1.0f);
@@ -321,6 +324,8 @@ void draw_crate() {
     glTexCoord2f(0.0f, 0.0f);
     glVertex3f( 1.0f, -1.0f, -1.0f);	// Bottom Left Of The Texture and Quad
     // Top Face
+    //TODO weird normal
+    glNormal3f(0,-1,0);
     glTexCoord2f(0.0f, 1.0f);
     glVertex3f(-1.0f,  1.0f, -1.0f);	// Top Left Of The Texture and Quad
     glTexCoord2f(0.0f, 0.0f);
@@ -330,6 +335,7 @@ void draw_crate() {
     glTexCoord2f(1.0f, 1.0f);
     glVertex3f( 1.0f,  1.0f, -1.0f);	// Top Right Of The Texture and Quad
     // Bottom Face
+    glNormal3f(0,1,0);
     glTexCoord2f(1.0f, 1.0f);
     glVertex3f(-1.0f, -1.0f, -1.0f);	// Top Right Of The Texture and Quad
     glTexCoord2f(0.0f, 1.0f);
@@ -339,6 +345,7 @@ void draw_crate() {
     glTexCoord2f(1.0f, 0.0f);
     glVertex3f(-1.0f, -1.0f,  1.0f);	// Bottom Right Of The Texture and Quad
     // Right face
+    glNormal3f(1,0,0);
     glTexCoord2f(1.0f, 0.0f);
     glVertex3f( 1.0f, -1.0f, -1.0f);	// Bottom Right Of The Texture and Quad
     glTexCoord2f(1.0f, 1.0f);
@@ -348,6 +355,7 @@ void draw_crate() {
     glTexCoord2f(0.0f, 0.0f);
     glVertex3f( 1.0f, -1.0f,  1.0f);	// Bottom Left Of The Texture and Quad
     // Left Face
+    glNormal3f(-1,0,0);
     glTexCoord2f(0.0f, 0.0f);
     glVertex3f(-1.0f, -1.0f, -1.0f);	// Bottom Left Of The Texture and Quad
     glTexCoord2f(1.0f, 0.0f);
@@ -382,10 +390,13 @@ static void draw_screen ( void ) {
     glMatrixMode ( GL_MODELVIEW );
     glColor3f ( 1.0, 1.0, 1.0 );
     glLoadIdentity();
-    gluLookAt ( 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 );
+    gluLookAt ( 10, 10,10.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 );
     //glTranslatef ( timeMile/250.0 - 10,0,0 );
 // 	glutWireCube(2.0);
     //glCallList ( 1 );
+
+
+
     glRotatef(globalTime / 100.0, 0, 1,0 );
     draw_crate();
     if ( countp == 10 ) {
@@ -426,6 +437,18 @@ void setup_shading() {
     glShadeModel ( GL_SMOOTH );
 }
 void setup_lighting() {
+
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+
+    GLfloat light_position[] = {0,0,10,1.0};//w=0:infinite
+    GLfloat light_diffuse[] = {1,1,1,1};
+    GLfloat light_ambient[] = {0.1,0.1,0.1,1};
+// set the lights
+    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
+
 
 }
 

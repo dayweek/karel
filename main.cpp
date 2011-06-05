@@ -56,6 +56,8 @@ string getDigits ( float fps ) {
     return digits;
 }
 
+
+
 void render_text ( const string text ) {
 
     glDisable ( GL_DEPTH_TEST );
@@ -134,11 +136,17 @@ void load_font() {
     }
 }
 
-void loadTexture() {
+void load_texture(string filename, GLuint texture) {
 //load image
 
     int x,y,n;
-    unsigned char *data = stbi_load ( "test.png", &x, &y, &n, 0 );
+	GLint tmp;
+
+    unsigned char *data = stbi_load ( filename.c_str(), &x, &y, &n, 0 );
+	if(!data) 
+		cerr << "cannot load " << filename << endl;
+	else {
+		glGetIntegerv(GL_TEXTURE_BINDING_2D, &tmp);
     // ... process data if not NULL ...
     // ... x = width, y = height, n = # 8-bit components per pixel ...
     // ... replace '0' with '1'..'4' to force that many components per pixel
@@ -155,6 +163,8 @@ void loadTexture() {
 // when texture area is large, bilinear filter the original
     glTexParameterf ( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
     stbi_image_free ( data );
+	glBindTexture ( GL_TEXTURE_2D, tmp);
+	}
 }
 
 
@@ -220,8 +230,11 @@ static void quit ( int code ) {
      * mode and restore the previous video settings,
      * etc.
      */
-    TTF_CloseFont ( font );
-    TTF_Quit();
+	if( TTF_WasInit() ) {
+		if(font)
+			TTF_CloseFont ( font );
+		TTF_Quit();
+	}
     SDL_Quit();
     delete ( objData );
     glDeleteTextures ( 1,&texture );
@@ -285,12 +298,12 @@ static void draw_screen ( void ) {
         countp++;
         frame = 0;
     }
-
+    frame++;
 
     /* Clear the color and depth buffers. */
     glClear ( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-    frame++;
+
 
     glMatrixMode ( GL_PROJECTION );
     glLoadIdentity();
@@ -304,15 +317,15 @@ static void draw_screen ( void ) {
 
     glLoadIdentity();
     gluLookAt ( 0.0, 0.0, 50.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 );
-    glTranslatef ( timeMile/50 - 10,0,0 );
+    glTranslatef ( timeMile/250.0 - 10,0,0 );
 // 	glutWireCube(2.0);
     glCallList ( 1 );
     if ( countp == 10 ) {
         cout << framesToPrint << " " << "FPS" << endl;
         countp = 0;
     }
-    renderImage();
-    render_text ( getDigits ( framesToPrint ) );
+    //renderImage();
+    //render_text ( getDigits ( framesToPrint ) );
 
     glFlush();
 
@@ -338,60 +351,18 @@ static void draw_screen ( void ) {
 
 void setup_texturing() {
     glEnable ( GL_TEXTURE_2D );
+	glGenTextures ( 1, &texture );
 
 }
 void setup_shading() {
-	
+	glShadeModel ( GL_SMOOTH );
 }
 void setup_lighting() {
 	
 }
 
-void setup_matrices() {
-	
-}
-
-void setup_opengl ( int width, int height ) {
-	timeMile = 0.0;
-    glEnable ( GL_BLEND );
-	setup_texturing();
-	setup_shading();
-	setup_lighting();
-	setup_matrices();
-
-
-
-// allocate a texture name
-    glGenTextures ( 1, &texture );
-    objData = new objLoader();
-    objData->load ( "test.obj" );
-    cout << objData->faceCount;
-
-
-    loadTexture();
-    glNewList ( 1, GL_COMPILE );
-    glBegin ( GL_TRIANGLES );
-    for ( int i = 0; i < objData->faceCount; i++ ) {
-        for ( int ii = 0; ii < 3; ii++ ) {
-            obj_vector *v = objData->vertexList[objData->faceList[i]->vertex_index[ii]];
-            glVertex3f ( ( GLfloat ) v->e[0], ( GLfloat ) v->e[1], ( GLfloat ) v->e[2] );
-        }
-    }
-    glEnd();
-    glEndList();
-
-    glClearColor ( 0.0, 0.0, 0.0, 0.0 );
-    timeMile = 0;
-
-    float ratio = ( float ) width / ( float ) height;
-
-    /* Our shading model--Gouraud (smooth). */
-    glShadeModel ( GL_SMOOTH );
-
-    /* Set the clear color. */
-    glClearColor ( 0, 0, 0, 0 );
-
-
+void setup_matrices(int width, int height) {
+	float ratio = ( float ) width / ( float ) height;
     /*
      * Change to the projection matrix and set
      * our viewing volume.
@@ -402,7 +373,40 @@ void setup_opengl ( int width, int height ) {
      * EXERCISE:
      * Replace this with a call to glFrustum.
      */
-    gluPerspective ( 60.0, ratio, 1.0, 1024.0 );
+    gluPerspective ( 60.0, ratio, 1.0, 1024.0 );	
+}
+
+void setup_opengl ( int width, int height ) {
+	timeMile = 0.0;
+	
+	glClearColor ( 0.0, 0.0, 0.0, 0.0 );
+	setup_texturing();
+	setup_shading();
+	setup_lighting();
+	setup_matrices(width, height);
+
+
+
+// allocate a texture name
+    
+    objData = new objLoader();
+    objData->load ("test.obj");
+    cout << objData->faceCount;
+
+
+    load_texture(string("test.png"), texture);
+    glNewList ( 1, GL_COMPILE );
+    glBegin ( GL_TRIANGLES );
+    for ( int i = 0; i < objData->faceCount; i++ ) {
+        for ( int ii = 0; ii < 3; ii++ ) {
+            obj_vector *v = objData->vertexList[objData->faceList[i]->vertex_index[ii]];
+            glVertex3f ( ( GLfloat ) v->e[0], ( GLfloat ) v->e[1], ( GLfloat ) v->e[2] );
+        }
+    }
+    glEnd();
+    glEndList();
+	delete objData;
+	
 }
 
 
@@ -429,10 +433,9 @@ int main ( int argc, char* argv[] ) {
 
     if ( TTF_Init() ==-1 ) {
         cerr << "TTF_Init: \n" << TTF_GetError();
-        SDL_Quit( );
-        exit ( 1 );
+		quit(1);
     }
-    load_font();
+
 
 
     /* Let's get some video information. */
@@ -511,6 +514,7 @@ int main ( int argc, char* argv[] ) {
      * double-buffered window for use with OpenGL.
      */
     setup_opengl ( width, height );
+	load_font();
 
     /*
      * Now we want to begin our normal app process--
@@ -521,6 +525,8 @@ int main ( int argc, char* argv[] ) {
         process_events( );
         /* Draw the screen. */
         draw_screen( );
+		SDL_Delay(1);
+		
     }
 
     /* Never reached. */

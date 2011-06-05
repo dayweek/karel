@@ -17,3 +17,7 @@ To execute:
 Enjoy!
 
 This is my school project. The aim of the course I attend is to learn fundamentals of openGL.
+
+Textures used:
+http://forums.mapcore.net/viewtopic.php?t=1274&start=0
+License: Public Domain

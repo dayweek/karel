@@ -2,9 +2,9 @@
 #include <math.h>
 #include <SDL/SDL.h>
 #ifdef CROSS
-  #include <SDL_ttf.h>
+#include <SDL_ttf.h>
 #else
-  #include <SDL/SDL_ttf.h>
+#include <SDL/SDL_ttf.h>
 #endif
 #include <GL/gl.h>
 #include <GL/glu.h>
@@ -39,7 +39,8 @@ Uint32 globalTime = 0;
 float frame = 0;
 Uint32 timeMile = 0;
 float framesToPrint = 0.0;
-GLuint texture;
+GLuint texture = 0;
+GLuint crate_texture = 0;
 
 string getDigits ( float fps ) {
     int f = fps;
@@ -136,37 +137,44 @@ void load_font() {
     }
 }
 
-void load_texture(string filename, GLuint texture) {
+void load_texture(string filename, GLuint* texture) {
 //load image
 
     int x,y,n;
-	GLint tmp;
+    GLint tmp;
 
     unsigned char *data = stbi_load ( filename.c_str(), &x, &y, &n, 0 );
-	if(!data) 
-		cerr << "cannot load " << filename << endl;
-	else {
-		glGetIntegerv(GL_TEXTURE_BINDING_2D, &tmp);
-    // ... process data if not NULL ...
-    // ... x = width, y = height, n = # 8-bit components per pixel ...
-    // ... replace '0' with '1'..'4' to force that many components per pixel
+    if (!data)
+        cerr << "cannot load " << filename << endl;
+    else {
+        glGenTextures ( 1, texture );
+        glGetIntegerv(GL_TEXTURE_BINDING_2D, &tmp);
+        // ... process data if not NULL ...
+        // ... x = width, y = height, n = # 8-bit components per pixel ...
+        // ... replace '0' with '1'..'4' to force that many components per pixel
 
 
 
 //gen texture
 
-    glBindTexture ( GL_TEXTURE_2D, texture );
-    glTexImage2D ( GL_TEXTURE_2D, 0, 3, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data );
+        glBindTexture ( GL_TEXTURE_2D, *texture );
+        glTexImage2D ( GL_TEXTURE_2D, 0, 3, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data );
 // when texture area is small, bilinear filter the closest mipmap
-    glTexParameterf ( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                      GL_LINEAR );
+        glTexParameterf ( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                          GL_LINEAR );
 // when texture area is large, bilinear filter the original
-    glTexParameterf ( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-    stbi_image_free ( data );
-	glBindTexture ( GL_TEXTURE_2D, tmp);
-	}
+        glTexParameterf ( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+        stbi_image_free ( data );
+        glBindTexture ( GL_TEXTURE_2D, tmp);
+    }
 }
 
+void load_textures() {
+
+    load_texture("crate.png", &crate_texture);
+    load_texture(string("test.png"), &texture);
+
+}
 
 void renderImage() {
     glDisable ( GL_DEPTH_TEST );
@@ -230,16 +238,19 @@ static void quit ( int code ) {
      * mode and restore the previous video settings,
      * etc.
      */
-	if( TTF_WasInit() ) {
-		if(font)
-			TTF_CloseFont ( font );
-		TTF_Quit();
-	}
-    SDL_Quit();
-    delete ( objData );
-    glDeleteTextures ( 1,&texture );
+    if ( TTF_WasInit() ) {
+        if (font)
+            TTF_CloseFont ( font );
+        TTF_Quit();
+    }
 
+    delete ( objData );
+    if (texture)
+        glDeleteTextures ( 1,&texture );
+    if (crate_texture)
+        glDeleteTextures ( 1,&crate_texture );
     /* Exit program. */
+    SDL_Quit();
     exit ( code );
 }
 
@@ -288,6 +299,66 @@ static void process_events ( void ) {
 
 }
 
+void draw_crate() {
+    glBindTexture(GL_TEXTURE_2D, crate_texture);
+    glBegin ( GL_QUADS);
+    // Front Face
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(-1.0f, -1.0f,  1.0f);	// Bottom Left Of The Texture and Quad
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f( 1.0f, -1.0f,  1.0f);	// Bottom Right Of The Texture and Quad
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f( 1.0f,  1.0f,  1.0f);	// Top Right Of The Texture and Quad
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(-1.0f,  1.0f,  1.0f);	// Top Left Of The Texture and Quad
+// 		Back Face
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(-1.0f, -1.0f, -1.0f);	// Bottom Right Of The Texture and Quad
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(-1.0f,  1.0f, -1.0f);	// Top Right Of The Texture and Quad
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f( 1.0f,  1.0f, -1.0f);	// Top Left Of The Texture and Quad
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f( 1.0f, -1.0f, -1.0f);	// Bottom Left Of The Texture and Quad
+    // Top Face
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(-1.0f,  1.0f, -1.0f);	// Top Left Of The Texture and Quad
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(-1.0f,  1.0f,  1.0f);	// Bottom Left Of The Texture and Quad
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f( 1.0f,  1.0f,  1.0f);	// Bottom Right Of The Texture and Quad
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f( 1.0f,  1.0f, -1.0f);	// Top Right Of The Texture and Quad
+    // Bottom Face
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(-1.0f, -1.0f, -1.0f);	// Top Right Of The Texture and Quad
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f( 1.0f, -1.0f, -1.0f);	// Top Left Of The Texture and Quad
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f( 1.0f, -1.0f,  1.0f);	// Bottom Left Of The Texture and Quad
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(-1.0f, -1.0f,  1.0f);	// Bottom Right Of The Texture and Quad
+    // Right face
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f( 1.0f, -1.0f, -1.0f);	// Bottom Right Of The Texture and Quad
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f( 1.0f,  1.0f, -1.0f);	// Top Right Of The Texture and Quad
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f( 1.0f,  1.0f,  1.0f);	// Top Left Of The Texture and Quad
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f( 1.0f, -1.0f,  1.0f);	// Bottom Left Of The Texture and Quad
+    // Left Face
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(-1.0f, -1.0f, -1.0f);	// Bottom Left Of The Texture and Quad
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(-1.0f, -1.0f,  1.0f);	// Bottom Right Of The Texture and Quad
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(-1.0f,  1.0f,  1.0f);	// Top Right Of The Texture and Quad
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(-1.0f,  1.0f, -1.0f);	// Top Left Of The Texture and Quad
+    glEnd();
+
+}
 
 static void draw_screen ( void ) {
 
@@ -301,25 +372,22 @@ static void draw_screen ( void ) {
     frame++;
 
     /* Clear the color and depth buffers. */
-    glClear ( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
-
-
+    glClearColor(0.0,0.0,0.0,0.0);
+    glClearDepth(1);
+    glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
     glMatrixMode ( GL_PROJECTION );
     glLoadIdentity();
     //(Left, Right, Bottom, Top, Near, Far);
     glFrustum ( -1.0, 1.0, -1.0, 1.0, 1.5, 100.0 );
     glMatrixMode ( GL_MODELVIEW );
-
-    glClear ( GL_COLOR_BUFFER_BIT );
     glColor3f ( 1.0, 1.0, 1.0 );
-
-
     glLoadIdentity();
-    gluLookAt ( 0.0, 0.0, 50.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 );
-    glTranslatef ( timeMile/250.0 - 10,0,0 );
+    gluLookAt ( 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 );
+    //glTranslatef ( timeMile/250.0 - 10,0,0 );
 // 	glutWireCube(2.0);
-    glCallList ( 1 );
+    //glCallList ( 1 );
+    glRotatef(globalTime / 100.0, 0, 1,0 );
+    draw_crate();
     if ( countp == 10 ) {
         cout << framesToPrint << " " << "FPS" << endl;
         countp = 0;
@@ -351,18 +419,18 @@ static void draw_screen ( void ) {
 
 void setup_texturing() {
     glEnable ( GL_TEXTURE_2D );
-	glGenTextures ( 1, &texture );
+    glGenTextures ( 1, &texture );
 
 }
 void setup_shading() {
-	glShadeModel ( GL_SMOOTH );
+    glShadeModel ( GL_SMOOTH );
 }
 void setup_lighting() {
-	
+
 }
 
 void setup_matrices(int width, int height) {
-	float ratio = ( float ) width / ( float ) height;
+    float ratio = ( float ) width / ( float ) height;
     /*
      * Change to the projection matrix and set
      * our viewing volume.
@@ -373,28 +441,32 @@ void setup_matrices(int width, int height) {
      * EXERCISE:
      * Replace this with a call to glFrustum.
      */
-    gluPerspective ( 60.0, ratio, 1.0, 1024.0 );	
+    gluPerspective ( 60.0, ratio, 1.0, 1024.0 );
 }
 
 void setup_opengl ( int width, int height ) {
-	timeMile = 0.0;
-	
-	glClearColor ( 0.0, 0.0, 0.0, 0.0 );
-	setup_texturing();
-	setup_shading();
-	setup_lighting();
-	setup_matrices(width, height);
+    timeMile = 0.0;
+    glEnable(GL_DEPTH_TEST);
+// 	glDepthFunc(GL_LEQUAL);
+    glClearColor(0.0,0.0,0.0,0.0);
+    glClearDepth(1);
+    glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+    setup_texturing();
+    setup_shading();
+    setup_lighting();
+    setup_matrices(width, height);
 
+}
 
-
-// allocate a texture name
-    
+void load_models() {
     objData = new objLoader();
     objData->load ("test.obj");
     cout << objData->faceCount;
 
 
-    load_texture(string("test.png"), texture);
+
     glNewList ( 1, GL_COMPILE );
     glBegin ( GL_TRIANGLES );
     for ( int i = 0; i < objData->faceCount; i++ ) {
@@ -405,10 +477,8 @@ void setup_opengl ( int width, int height ) {
     }
     glEnd();
     glEndList();
-	delete objData;
-	
+    delete objData;
 }
-
 
 
 int main ( int argc, char* argv[] ) {
@@ -433,7 +503,7 @@ int main ( int argc, char* argv[] ) {
 
     if ( TTF_Init() ==-1 ) {
         cerr << "TTF_Init: \n" << TTF_GetError();
-		quit(1);
+        quit(1);
     }
 
 
@@ -514,7 +584,9 @@ int main ( int argc, char* argv[] ) {
      * double-buffered window for use with OpenGL.
      */
     setup_opengl ( width, height );
-	load_font();
+    load_font();
+    load_textures();
+    //load_models();
 
     /*
      * Now we want to begin our normal app process--
@@ -525,8 +597,8 @@ int main ( int argc, char* argv[] ) {
         process_events( );
         /* Draw the screen. */
         draw_screen( );
-		SDL_Delay(1);
-		
+        SDL_Delay(1);
+
     }
 
     /* Never reached. */

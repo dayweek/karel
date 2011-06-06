@@ -42,6 +42,123 @@ float framesToPrint = 0.0;
 GLuint texture = 0;
 GLuint crate_texture = 0;
 
+const int size = 20;
+typedef pair<int, int> pos;
+pos closest;
+
+class Node {
+public:
+	Node() {
+		free = true;
+		dist = 0;
+		dest = false;
+		visited = false;
+	}
+	bool free;
+	bool visited;
+	int dist;
+	bool dest;
+} n ;
+vector< vector <Node> > field(size, vector<Node>(size,n));
+bool is_in_field(int x, int y) {
+	if(x > -1 && x < size && 
+		y > -1 && y < size)
+		return true;
+	return false;
+}
+void draw_crate();
+class Robot {
+public:
+	pos start_pos;
+	Uint32 start_time;
+	vector<pos> path;
+	bool has_crate;
+	void render() {
+		float vzdalenost = (globalTime - start_time) / 1000.0;
+		int policka = vzdalenost;
+		if(policka > path.size())
+			policka = path.size();
+		float x = start_pos.first, y = start_pos.second;
+		for(int i = 0; i < policka; i++) {
+			x += path[i].first;
+			y += path[i].second;
+		}
+		if(policka < path.size()) {
+			x += path[policka].first * (vzdalenost - floor(vzdalenost));
+			y += path[policka].second * (vzdalenost - floor(vzdalenost));
+		}
+		glMatrixMode ( GL_MODELVIEW );
+		glPushMatrix();
+		glTranslatef(x + 0.5, 0, y + 0.5);
+		draw_crate();
+		glPopMatrix();
+	}
+};
+
+void get_path(int x, int y, int i) {
+	if(!field[x][y].visited || field[x][y].dist > i) {
+		field[x][y].dist = i;
+		field[x][y].visited = true;
+	}
+	else return;
+	if(field[x][y].dest) {
+		closest = make_pair<int, int>(x,y);
+		return;
+	}
+	if(is_in_field(x + 1, y) && field[x + 1][y].free)
+		get_path(x + 1, y, i + 1);
+	if(is_in_field(x, y + 1) && field[x][y + 1].free)
+		get_path(x, y + 1, i + 1);
+	if(is_in_field(x, y - 1) && field[x][y - 1].free)
+		get_path(x, y -1, i + 1);
+	if(is_in_field(x - 1, y) && field[x - 1][y].free)
+		get_path(x -1, y, i + 1);
+}
+void reset_field_for_find() {
+		for(int i;i < size;i++)
+			for(int ii;ii < size;ii++) {
+				field[i][ii].visited = false;
+				field[i][ii].dist = -1;
+				field[i][ii].dest = false;
+			}
+				
+}
+
+void backtrack(int x, int y , vector<pair<int, int> >& p) {
+	p.push_back(make_pair<int, int>(x,y));
+	int i = field[x][y].dist - 1;
+	if(i == -1)
+		return;
+	if(is_in_field(x + 1, y) && field[x + 1][y].dist  == i &&  field[x+1][y].visited)
+		backtrack(x + 1, y, p);
+	else if(is_in_field(x, y + 1) && field[x][y + 1].dist  == i &&  field[x][y + 1].visited)
+		backtrack(x, y + 1, p);
+	else if(is_in_field(x, y - 1) && field[x][y - 1].dist  == i && field[x][y - 1].visited)
+		backtrack(x, y -1,p);
+	else if(is_in_field(x - 1, y) && field[x - 1][y].dist  == i && field[x - 1][y].visited)
+		backtrack(x -1, y,p);
+}
+
+ vector<pair<int, int> > find_path(int x1,int y1, int x2, int y2) {
+	closest = make_pair<int, int>(-1,-1);
+	reset_field_for_find();
+	field[x2][y2].dest = true;
+	get_path(x1,y1,0);
+	vector<pair<int, int> > p(0);
+	if(closest.first == -1)
+		return p;
+	else {
+		backtrack(closest.first, closest.second, p);
+		vector<pair<int, int> > pp(0);
+		for(int i = 0;i < p.size() - 1;i++)
+			pp.push_back(make_pair<int,int>(p[i+1].first - p[i].first, p[i+1].second - p[i].second));
+		return pp;
+	}
+
+}
+
+Robot robot;
+
 string getDigits ( float fps ) {
     int f = fps;
     string digits;
@@ -306,64 +423,64 @@ void draw_crate() {
     glNormal3f(0,0,1);
     // Front Face
     glTexCoord2f(0.0f, 0.0f);
-    glVertex3f(-1.0f, -1.0f,  1.0f);	// Bottom Left Of The Texture and Quad
+    glVertex3f(-0.5f, -0.5f,  0.5f);	// Bottom Left Of The Texture and Quad
     glTexCoord2f(1.0f, 0.0f);
-    glVertex3f( 1.0f, -1.0f,  1.0f);	// Bottom Right Of The Texture and Quad
+    glVertex3f( 0.5f, -0.5f,  0.5f);	// Bottom Right Of The Texture and Quad
     glTexCoord2f(1.0f, 1.0f);
-    glVertex3f( 1.0f,  1.0f,  1.0f);	// Top Right Of The Texture and Quad
+    glVertex3f( 0.5f,  0.5f,  0.5f);	// Top Right Of The Texture and Quad
     glTexCoord2f(0.0f, 1.0f);
-    glVertex3f(-1.0f,  1.0f,  1.0f);	// Top Left Of The Texture and Quad
+    glVertex3f(-0.5f,  0.5f,  0.5f);	// Top Left Of The Texture and Quad
 // 		Back Face
     glNormal3f(0,0,-1);
     glTexCoord2f(1.0f, 0.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);	// Bottom Right Of The Texture and Quad
+    glVertex3f(-0.5f, -0.5f, -0.5f);	// Bottom Right Of The Texture and Quad
     glTexCoord2f(1.0f, 1.0f);
-    glVertex3f(-1.0f,  1.0f, -1.0f);	// Top Right Of The Texture and Quad
+    glVertex3f(-0.5f,  0.5f, -0.5f);	// Top Right Of The Texture and Quad
     glTexCoord2f(0.0f, 1.0f);
-    glVertex3f( 1.0f,  1.0f, -1.0f);	// Top Left Of The Texture and Quad
+    glVertex3f( 0.5f,  0.5f, -0.5f);	// Top Left Of The Texture and Quad
     glTexCoord2f(0.0f, 0.0f);
-    glVertex3f( 1.0f, -1.0f, -1.0f);	// Bottom Left Of The Texture and Quad
+    glVertex3f( 0.5f, -0.5f, -0.5f);	// Bottom Left Of The Texture and Quad
     // Top Face
     //TODO weird normal
     glNormal3f(0,-1,0);
     glTexCoord2f(0.0f, 1.0f);
-    glVertex3f(-1.0f,  1.0f, -1.0f);	// Top Left Of The Texture and Quad
+    glVertex3f(-0.5f,  0.5f, -0.5f);	// Top Left Of The Texture and Quad
     glTexCoord2f(0.0f, 0.0f);
-    glVertex3f(-1.0f,  1.0f,  1.0f);	// Bottom Left Of The Texture and Quad
+    glVertex3f(-0.5f,  0.5f,  0.5f);	// Bottom Left Of The Texture and Quad
     glTexCoord2f(1.0f, 0.0f);
-    glVertex3f( 1.0f,  1.0f,  1.0f);	// Bottom Right Of The Texture and Quad
+    glVertex3f( 0.5f,  0.5f,  0.5f);	// Bottom Right Of The Texture and Quad
     glTexCoord2f(1.0f, 1.0f);
-    glVertex3f( 1.0f,  1.0f, -1.0f);	// Top Right Of The Texture and Quad
+    glVertex3f( 0.5f,  0.5f, -0.5f);	// Top Right Of The Texture and Quad
     // Bottom Face
     glNormal3f(0,1,0);
     glTexCoord2f(1.0f, 1.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);	// Top Right Of The Texture and Quad
+    glVertex3f(-0.5f, -0.5f, -0.5f);	// Top Right Of The Texture and Quad
     glTexCoord2f(0.0f, 1.0f);
-    glVertex3f( 1.0f, -1.0f, -1.0f);	// Top Left Of The Texture and Quad
+    glVertex3f( 0.5f, -0.5f, -0.5f);	// Top Left Of The Texture and Quad
     glTexCoord2f(0.0f, 0.0f);
-    glVertex3f( 1.0f, -1.0f,  1.0f);	// Bottom Left Of The Texture and Quad
+    glVertex3f( 0.5f, -0.5f,  0.5f);	// Bottom Left Of The Texture and Quad
     glTexCoord2f(1.0f, 0.0f);
-    glVertex3f(-1.0f, -1.0f,  1.0f);	// Bottom Right Of The Texture and Quad
+    glVertex3f(-0.5f, -0.5f,  0.5f);	// Bottom Right Of The Texture and Quad
     // Right face
     glNormal3f(1,0,0);
     glTexCoord2f(1.0f, 0.0f);
-    glVertex3f( 1.0f, -1.0f, -1.0f);	// Bottom Right Of The Texture and Quad
+    glVertex3f( 0.5f, -0.5f, -0.5f);	// Bottom Right Of The Texture and Quad
     glTexCoord2f(1.0f, 1.0f);
-    glVertex3f( 1.0f,  1.0f, -1.0f);	// Top Right Of The Texture and Quad
+    glVertex3f( 0.5f,  0.5f, -0.5f);	// Top Right Of The Texture and Quad
     glTexCoord2f(0.0f, 1.0f);
-    glVertex3f( 1.0f,  1.0f,  1.0f);	// Top Left Of The Texture and Quad
+    glVertex3f( 0.5f,  0.5f,  0.5f);	// Top Left Of The Texture and Quad
     glTexCoord2f(0.0f, 0.0f);
-    glVertex3f( 1.0f, -1.0f,  1.0f);	// Bottom Left Of The Texture and Quad
+    glVertex3f( 0.5f, -0.5f,  0.5f);	// Bottom Left Of The Texture and Quad
     // Left Face
     glNormal3f(-1,0,0);
     glTexCoord2f(0.0f, 0.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);	// Bottom Left Of The Texture and Quad
+    glVertex3f(-0.5f, -0.5f, -0.5f);	// Bottom Left Of The Texture and Quad
     glTexCoord2f(1.0f, 0.0f);
-    glVertex3f(-1.0f, -1.0f,  1.0f);	// Bottom Right Of The Texture and Quad
+    glVertex3f(-0.5f, -0.5f,  0.5f);	// Bottom Right Of The Texture and Quad
     glTexCoord2f(1.0f, 1.0f);
-    glVertex3f(-1.0f,  1.0f,  1.0f);	// Top Right Of The Texture and Quad
+    glVertex3f(-0.5f,  0.5f,  0.5f);	// Top Right Of The Texture and Quad
     glTexCoord2f(0.0f, 1.0f);
-    glVertex3f(-1.0f,  1.0f, -1.0f);	// Top Left Of The Texture and Quad
+    glVertex3f(-0.5f,  0.5f, -0.5f);	// Top Left Of The Texture and Quad
     glEnd();
 
 }
@@ -390,15 +507,14 @@ static void draw_screen ( void ) {
     glMatrixMode ( GL_MODELVIEW );
     glColor3f ( 1.0, 1.0, 1.0 );
     glLoadIdentity();
-    gluLookAt ( 10, 10,10.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 );
+    gluLookAt ( 10, 10,10, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 );
     //glTranslatef ( timeMile/250.0 - 10,0,0 );
 // 	glutWireCube(2.0);
     //glCallList ( 1 );
 
 
 
-    glRotatef(globalTime / 100.0, 0, 1,0 );
-    draw_crate();
+	robot.render();
     if ( countp == 10 ) {
         cout << framesToPrint << " " << "FPS" << endl;
         countp = 0;
@@ -609,6 +725,11 @@ int main ( int argc, char* argv[] ) {
     setup_opengl ( width, height );
     load_font();
     load_textures();
+	robot.start_pos = make_pair<int, int>(0,0);
+	robot.start_time = globalTime;
+	field[3][0].free = false;
+	robot.path = find_path(0,0,5,0);
+	
     //load_models();
 
     /*

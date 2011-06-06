@@ -62,6 +62,12 @@ public:
 	bool dest;
 	int crates_to_build, crates;
 } n ;
+
+struct Crate {
+	int x,y,level;
+	pair<int,int> otoceni;
+};
+vector<Crate> crates(0);
 vector< vector <Node> > field(size, vector<Node>(size,n));
 bool is_in_field(int x, int y) {
 	if(x > -1 && x < size && 
@@ -237,8 +243,14 @@ public:
 			glMatrixMode ( GL_MODELVIEW );
 			glPushMatrix();
 			glTranslatef(start_pos.first + 0.5, 0, start_pos.second + 0.5);
-			draw_crate();
+			if(has_crate)
+				draw_crate();
 			glPopMatrix();	
+			
+			glPushMatrix();
+			glTranslatef(start_pos.first + 0.5, 0, start_pos.second + 0.5);
+			draw_podvozek();
+			glPopMatrix();
 		}
 			break;
 		case LIFT_UP:
@@ -271,31 +283,37 @@ public:
 				start_time +=  2000.0;
 				state = LIFT_DOWN;
 				field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates++;
+				Crate c;
+				c.x = start_pos.first + path[path.size()-1].first;
+				c.y = start_pos.second + path[path.size()-1].second;
+				c.level = field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates -1;
+				c.otoceni = path[path.size()-1];
+				crates.push_back(c);
 				render(); 				
 			}
 				glMatrixMode ( GL_MODELVIEW );
 				glPushMatrix();
 				
 				if(path[path.size()-1].first == 1) {
-					glTranslatef(start_pos.first + 1.0, field[start_pos.first][start_pos.second].crates, start_pos.second + 0.5);
+					glTranslatef(start_pos.first + 1.0, field[start_pos.first][start_pos.second].crates - 0.5, start_pos.second + 0.5);
 					glRotatef(time * 45, 0, 0, 1);
-					glTranslatef(-0.5, 0, 0);
+					glTranslatef(-0.5, 0.5, 0);
 				}
 				if(path[path.size()-1].first == -1) {
-					glTranslatef(start_pos.first, field[start_pos.first][start_pos.second].crates, start_pos.second + 0.5);
+					glTranslatef(start_pos.first, field[start_pos.first][start_pos.second].crates - 0.5, start_pos.second + 0.5);
 					glRotatef(- time * 45, 0, 0, 1);
-					glTranslatef(0.5, 0, 0);
+					glTranslatef(0.5, 0.5, 0);
 				}					
 				
 				if(path[path.size()-1].second == 1) {
-					glTranslatef(start_pos.first + 0.5, field[start_pos.first][start_pos.second].crates, start_pos.second + 1);
+					glTranslatef(start_pos.first + 0.5, field[start_pos.first][start_pos.second].crates - 0.5, start_pos.second + 1);
 					glRotatef(time * 45, 1, 0, 0);
-					glTranslatef(0, 0, -0.5);
+					glTranslatef(0, 0.5, -0.5);
 				}
 				if(path[path.size()-1].second == -1) {
-					glTranslatef(start_pos.first + 0.5, field[start_pos.first][start_pos.second].crates, start_pos.second );
+					glTranslatef(start_pos.first + 0.5, field[start_pos.first][start_pos.second].crates - 0.5, start_pos.second );
 					glRotatef(- time * 45, 1, 0, 0);
-					glTranslatef(0, 0, 0.5);
+					glTranslatef(0, 0.5, 0.5);
 				}				
 				draw_crate();
 				glPopMatrix();	
@@ -764,6 +782,15 @@ glColor3f(0.8, 0, 0);
 
 	glEnd();	
 }
+
+void draw_crates() {
+	for(int i = 0; i< crates.size(); i++) {
+		glPushMatrix();
+		glTranslatef(crates[i].x + 0.5, crates[i].level, crates[i].y + 0.5);
+		draw_crate();
+		glPopMatrix();	
+	}
+}
 static void draw_screen ( void ) {
 
     globalTime = SDL_GetTicks();
@@ -793,6 +820,7 @@ static void draw_screen ( void ) {
 
 
 draw_depo();
+draw_crates();
 	robot.render();
     if ( countp == 10 ) {
         cout << framesToPrint << " " << "FPS" << endl;

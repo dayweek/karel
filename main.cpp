@@ -84,7 +84,10 @@ void get_path(int x, int y, int i) {
 	}
 	else return;
 	if(field[x][y].dest) {
-		closest = make_pair<int, int>(x,y);
+		if(closest.first == -1)
+			closest = make_pair<int, int>(x,y);
+		else if(field[x][y].dist < field[closest.first][closest.second].dist)
+			closest = make_pair<int, int>(x,y);
 		return;
 	}
 	if(is_in_field(x + 1, y) && field[x + 1][y].free)
@@ -102,6 +105,8 @@ void reset_field_for_find() {
 				field[i][ii].visited = false;
 				field[i][ii].dist = -1;
 				field[i][ii].dest = false;
+				if(field[i][ii].crates > 0)
+					field[i][ii].free = false;
 			}
 				
 }
@@ -160,15 +165,21 @@ void backtrack(int x, int y , vector<pair<int, int> >& p) {
 }
 void draw_crate();
 void draw_podvozek();
+void draw_tyc(float vyska);
 void generate_orders() {
-	int ints[] = {0,1,0,0,};
+	int ints[] = {0,0,0,0};
 	vector<int> p1 (ints, ints + sizeof(ints) / sizeof(int) );
-	int ints2[] = {0,0,0,1,};
+	int ints2[] = {0,3,2,1};
 	vector<int> p2 (ints2, ints2 + sizeof(ints2) / sizeof(int) );
+	int ints3[] = {0,2,0,0};
+	vector<int> p3 (ints3, ints3 + sizeof(ints3) / sizeof(int) );
+	int ints4[] = {0,1,0,0};
+	vector<int> p4 (ints4, ints4 + sizeof(ints4) / sizeof(int) );
 	vector<vector<int> > p;
 	p.push_back(p1);
 	p.push_back(p2);
-	
+	p.push_back(p3);
+	p.push_back(p4);	
 	
 	for(int i = 0; i < p.size(); i++)
 		for(int ii = 0; ii < p[i].size(); ii++)
@@ -179,6 +190,13 @@ void generate_orders() {
 			}
 				random_shuffle ( orders.begin(), orders.end() );
 	
+}
+void print_path(vector<pair<int, int> > p) {
+			cout << "path" << endl;
+	for(int i = 0; i < p.size(); i++) {
+
+		cout << p[i].first << p[i].second << endl;
+	}
 }
 
 class Robot {
@@ -192,48 +210,64 @@ public:
 		switch(state) { 
 		case MOVEMENT: 
 		{
-			float vzdalenost = (globalTime - start_time) / 1000.0;
-			int policka = vzdalenost;
-			float x = start_pos.first; float y = start_pos.second;
-			if(path.size() > 0)
-				if(policka >= path.size() - 1)
+			if(path.size() == 0) {
+					if(to_depo()) {
+					print_path(path);
+					state = MOVEMENT;
+					has_crate = false;
+					render();
+				}
+			} else {
+				float vzdalenost = (globalTime - start_time) / 1000.0;
+				int policka = vzdalenost;
+				float x = start_pos.first; float y = start_pos.second;
+	//			print_path(path);
+				if(policka > path.size() - 1)
 					policka = path.size() - 1;
 				for(int i = 0; i < policka; i++) {
 					x += path[i].first;
 					y += path[i].second;
 				}
-			if(path.size() == 0 || policka == path.size() - 1) {
-				if(path.size() > 0)
+				
+				if( policka == path.size() - 1) {
+					path_from_field();
 					start_time += policka * 1000.0;
-				//determine state
-				if(has_crate)
-					state = LIFT_UP;
-				else {
-					if(where_to_put()) {
-						has_crate = true;
-						state = MOVEMENT;
-						cout << "vychazi ze skladiste" << endl;
-					} else {
-						state = STOPPED;
-						cout << "zastaveny" << endl;
+					//determine state
+					if(has_crate) {
+						state = LIFT_UP;
+						
 					}
-				}
-				start_pos = make_pair<int, int>(x,y);
-				
-				render();
+					else {
+						
+						start_pos = make_pair<int, int>(x,y);
+						if(where_to_put()) {
+							has_crate = true;
+							state = MOVEMENT;
+							
+							cout << "vychazi ze skladiste" << endl;
+ 							print_path(path);
+						} else {
+							state = STOPPED;
+							cout << "zastaveny" << endl;
+						}
+					}
+					start_pos = make_pair<int, int>(x,y);
+					
+					render();
 
-			} else {
-				x += (float)path[policka].first * (vzdalenost - floor(vzdalenost));
-				y += (float)path[policka].second * (vzdalenost - floor(vzdalenost));
-				glMatrixMode ( GL_MODELVIEW );
-				glPushMatrix();
-				glTranslatef(x + 0.5, 0, y + 0.5);
-				draw_podvozek();
-				if(has_crate)
-					draw_crate();
-				glPopMatrix();
-				
-				
+				} else {
+					x += (float)path[policka].first * (vzdalenost - floor(vzdalenost));
+					y += (float)path[policka].second * (vzdalenost - floor(vzdalenost));
+					glMatrixMode ( GL_MODELVIEW );
+					glPushMatrix();
+					glTranslatef(x + 0.5, 0, y + 0.5);
+					draw_podvozek();
+					if(has_crate)
+						draw_crate();
+					glPopMatrix();
+					
+					
+				}
 			}
 		}
 			break;
@@ -256,8 +290,8 @@ public:
 		case LIFT_UP:
 		{
 			float patro = (globalTime - start_time) / 1000.0;
-			if(field[start_pos.first][start_pos.second].crates < patro) {
-				start_time += field[start_pos.first][start_pos.second].crates * 1000.0;
+			if(field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates < patro) {
+				start_time += field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates * 1000.0;
 				state = STORE;
 				cout << "vyklada" << endl;
 				render(); 
@@ -272,6 +306,7 @@ public:
 				glPushMatrix();
 				glTranslatef(start_pos.first + 0.5, 0, start_pos.second + 0.5);
 				draw_podvozek();
+				draw_tyc(patro);
 				glPopMatrix();
 			}
 		}
@@ -282,7 +317,8 @@ public:
 			if(time > 2) {
 				start_time +=  2000.0;
 				state = LIFT_DOWN;
-				field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates++;
+				field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates =
+				field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates + 1;
 				Crate c;
 				c.x = start_pos.first + path[path.size()-1].first;
 				c.y = start_pos.second + path[path.size()-1].second;
@@ -290,29 +326,29 @@ public:
 				c.otoceni = path[path.size()-1];
 				crates.push_back(c);
 				render(); 				
-			}
+			} else {
 				glMatrixMode ( GL_MODELVIEW );
 				glPushMatrix();
 				
 				if(path[path.size()-1].first == 1) {
-					glTranslatef(start_pos.first + 1.0, field[start_pos.first][start_pos.second].crates - 0.5, start_pos.second + 0.5);
-					glRotatef(time * 45, 0, 0, 1);
+					glTranslatef(start_pos.first + 1.0, field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 0.5, start_pos.second + 0.5);
+					glRotatef(-time * 45, 0, 0, 1);
 					glTranslatef(-0.5, 0.5, 0);
 				}
 				if(path[path.size()-1].first == -1) {
-					glTranslatef(start_pos.first, field[start_pos.first][start_pos.second].crates - 0.5, start_pos.second + 0.5);
-					glRotatef(- time * 45, 0, 0, 1);
+					glTranslatef(start_pos.first, field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 0.5, start_pos.second + 0.5);
+					glRotatef( time * 45, 0, 0, 1);
 					glTranslatef(0.5, 0.5, 0);
 				}					
 				
 				if(path[path.size()-1].second == 1) {
-					glTranslatef(start_pos.first + 0.5, field[start_pos.first][start_pos.second].crates - 0.5, start_pos.second + 1);
+					glTranslatef(start_pos.first + 0.5, field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 0.5, start_pos.second + 1);
 					glRotatef(time * 45, 1, 0, 0);
 					glTranslatef(0, 0.5, -0.5);
 				}
 				if(path[path.size()-1].second == -1) {
-					glTranslatef(start_pos.first + 0.5, field[start_pos.first][start_pos.second].crates - 0.5, start_pos.second );
-					glRotatef(- time * 45, 1, 0, 0);
+					glTranslatef(start_pos.first + 0.5, field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 0.5, start_pos.second );
+					glRotatef(-time * 45, 1, 0, 0);
 					glTranslatef(0, 0.5, 0.5);
 				}				
 				draw_crate();
@@ -321,31 +357,30 @@ public:
 				glPushMatrix();
 				glTranslatef(start_pos.first + 0.5, 0, start_pos.second + 0.5);
 				draw_podvozek();
+				draw_tyc( field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates);
 				glPopMatrix();
+			}
 		}
 		break;
 		case LIFT_DOWN:
 		{
 			float patro = (globalTime - start_time) / 1000.0;
-			if(field[start_pos.first][start_pos.second].crates_to_build < patro) {
+			if(field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 1 < patro) {
 				//dalsi stav
 				if(to_depo()) {
+// 					print_path(path);
 					state = MOVEMENT;
-					start_time += field[start_pos.first][start_pos.second].crates_to_build * 1000.0;
+					start_time += (field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 1) * 1000.0;
 					has_crate = false;
 				}
 				render(); 
 			} else {
 				//nastav vysku
-				glMatrixMode ( GL_MODELVIEW );
-				glPushMatrix();
-				glTranslatef(start_pos.first + 0.5, field[start_pos.first][start_pos.second].crates_to_build-  patro, start_pos.second + 0.5);
-				draw_crate();
-				glPopMatrix();
-				
+
 				glPushMatrix();
 				glTranslatef(start_pos.first + 0.5, 0, start_pos.second + 0.5);
 				draw_podvozek();
+				draw_tyc((field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 1) - patro);
 				glPopMatrix();
 			}
 		}
@@ -370,7 +405,7 @@ public:
 				break;
 			}
 		}
-		path_from_field();
+		
 		path = pp;
 		path_to_field();
 		
@@ -383,9 +418,10 @@ public:
 	bool to_depo() {
 		vector<pair<int, int> > pp;
 		pp = find_path_to_depo(start_pos.first, start_pos.second);
-		path_from_field();
+		
 		path = pp;
 		path_to_field();
+		return true;
 	}
 	void path_from_field() {
 		int x = start_pos.first; int y = start_pos.second;
@@ -408,7 +444,7 @@ public:
 };
 
 
-Robot robot;
+Robot robot1, robot2;
 
 string getDigits ( float fps ) {
     int f = fps;
@@ -761,7 +797,80 @@ glColor3f(0.8, 0.6, 0.3);
 	glEnd();
 	
 }
+void draw_tyc(float vyska) {
 
+glBindTexture(GL_TEXTURE_2D, NULL);
+
+glColor3f(0.1, 0.1, 0.7);
+	
+    glBegin ( GL_QUADS);
+    // Front Face
+    // Bottom Face
+    glNormal3f(0,-1,0);
+    // Front Face
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(-0.2f, -0.5f,  0.2f);	// Bottom Left Of The Texture and Quad
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f( 0.2f, -0.5f,  0.2f);	// Bottom Right Of The Texture and Quad
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f( 0.2f,  -0.5f + vyska,  0.2f);	// Top Right Of The Texture and Quad
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(-0.2f,   -0.5f + vyska,  0.2f);	// Top Left Of The Texture and Quad
+// 		Back Face
+    glNormal3f(0,0,-1);
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(-0.2f, -0.5f, -0.2f);	// Bottom Right Of The Texture and Quad
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(-0.2f,   -0.5f + vyska, -0.2f);	// Top Right Of The Texture and Quad
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f( 0.2f,   -0.5f + vyska, -0.2f);	// Top Left Of The Texture and Quad
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f( 0.2f, -0.5f, -0.2f);	// Bottom Left Of The Texture and Quad
+    // Top Face
+    //TODO weird normal
+    glNormal3f(0,-1,0);
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(-0.2f,   -0.5f + vyska, -0.2f);	// Top Left Of The Texture and Quad
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(-0.2f,   -0.5f + vyska,  0.2f);	// Bottom Left Of The Texture and Quad
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f( 0.2f,   -0.5f + vyska,  0.2f);	// Bottom Right Of The Texture and Quad
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f( 0.2f,   -0.5f + vyska, -0.2f);	// Top Right Of The Texture and Quad
+    // Bottom Face
+    glNormal3f(0,1,0);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(-0.2f, -0.5f, -0.2f);	// Top Right Of The Texture and Quad
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f( 0.2f, -0.5f, -0.2f);	// Top Left Of The Texture and Quad
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f( 0.2f, -0.5f,  0.2f);	// Bottom Left Of The Texture and Quad
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(-0.2f, -0.5f,  0.2f);	// Bottom Right Of The Texture and Quad
+    // Right face
+    glNormal3f(1,0,0);
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f( 0.2f, -0.5f, -0.2f);	// Bottom Right Of The Texture and Quad
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f( 0.2f,   -0.5f + vyska, -0.2f);	// Top Right Of The Texture and Quad
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f( 0.2f,   -0.5f + vyska,  0.2f);	// Top Left Of The Texture and Quad
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f( 0.2f, -0.5f,  0.2f);	// Bottom Left Of The Texture and Quad
+    // Left Face
+    glNormal3f(-1,0,0);
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(-0.2f, -0.5f, -0.2f);	// Bottom Left Of The Texture and Quad
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(-0.2f, -0.5f,  0.2f);	// Bottom Right Of The Texture and Quad
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(-0.2f,   -0.5f + vyska,  0.2f);	// Top Right Of The Texture and Quad
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(-0.2f,  -0.5f + vyska, -0.2f);	// Top Left Of The Texture and Quad
+
+	glEnd();
+	
+}
 void draw_depo() {
 
 glBindTexture(GL_TEXTURE_2D, NULL);
@@ -813,15 +922,16 @@ static void draw_screen ( void ) {
     glMatrixMode ( GL_MODELVIEW );
     glColor3f ( 1.0, 1.0, 1.0 );
     glLoadIdentity();
-    gluLookAt ( 20, 20,20, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 );
+    gluLookAt ( 10, 10,10, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 );
     //glTranslatef ( timeMile/250.0 - 10,0,0 );
 // 	glutWireCube(2.0);
     //glCallList ( 1 );
 
 
-draw_depo();
+//draw_depo();
 draw_crates();
-	robot.render();
+	robot1.render();
+// 	robot2.render();
     if ( countp == 10 ) {
         cout << framesToPrint << " " << "FPS" << endl;
         countp = 0;
@@ -1039,13 +1149,17 @@ int main ( int argc, char* argv[] ) {
     load_font();
     load_textures();
 	generate_orders();
-	robot.start_pos = make_pair<int, int>(0,0);
-	robot.start_time = globalTime;
-	robot.state = Robot::MOVEMENT;
-	robot.path = vector<pair<int, int> >(0);
-	field[3][0].free = false;
+	robot1.start_pos = make_pair<int, int>(0,0);
+	robot1.start_time = globalTime;
+	robot1.state = Robot::MOVEMENT;
+	robot1.has_crate = false;
+	robot1.path = vector<pair<int, int> >(0);
 
-	
+	robot2.start_pos = make_pair<int, int>(0,0);
+	robot2.start_time = globalTime;
+	robot2.state = Robot::MOVEMENT;
+	robot2.has_crate = false;
+	robot2.path = vector<pair<int, int> >(0);	
     //load_models();
 
     /*

@@ -900,6 +900,28 @@ void draw_crates() {
 		glTranslatef(crates[i].x + 0.5, crates[i].level, crates[i].y + 0.5);
 		draw_crate();
 		glPopMatrix();	
+		
+// 				if(crates[i].otoceni.first == 1) {
+// 					glTranslatef(crates[i].x + 3.0, field[crates[i].x ][crates[i].y ].crates - 0.5, crates[i].y + 1.5);
+// 					glRotatef(-90, 0, 0, 1);
+// 					glTranslatef(-0.5, 0.5, 0);
+// 				}
+// 				if(crates[i].otoceni.first == -1) {
+// 					glTranslatef(crates[i].x + 2.0, field[crates[i].x ][crates[i].y ].crates - 0.5, crates[i].y + 1.5);
+// 					glRotatef(90, 0, 0, 1);
+// 					glTranslatef(0.5, 0.5, 0);
+// 				}					
+// 				
+// 				if(crates[i].otoceni.second == 1) {
+// 					glTranslatef(crates[i].x +0.5, field[crates[i].x][crates[i].y ].crates - 0.5, crates[i].y );
+// 					glRotatef(90, 1, 0, 0);
+// 					glTranslatef(0, 0.5, -0.5);
+// 				}
+// 				if(crates[i].otoceni.second == -1) {
+// 					glTranslatef(crates[i].x + 0.5, field[crates[i].x][crates[i].y].crates - 0.5, crates[i].y );
+// 					glRotatef(-90, 1, 0, 0);
+// 					glTranslatef(0, 0.5, 0.5);
+// 				}	
 	}
 }
 static void draw_screen ( void ) {

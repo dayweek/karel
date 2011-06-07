@@ -1,0 +1,2 @@
+TTF_OpenFont: 
+Couldn't open Ubuntu-R.ttfcannot load test.png

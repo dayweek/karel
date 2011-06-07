@@ -13,7 +13,9 @@
 #include <sstream>
 #include <algorithm>
 #include "stb_image.h"
-
+#ifdef CROSS
+#include "time.h"
+#endif
 int next_power ( int x ) {
     return pow ( 2, ceil ( log ( x ) /log ( 2 ) ) );
 }

@@ -109,13 +109,13 @@ stb_image/fast:
 	cd /home/david/skola/opengl/karel && $(MAKE) -f stb_image/CMakeFiles/stb_image.dir/build.make stb_image/CMakeFiles/stb_image.dir/build
 .PHONY : stb_image/fast
 
-stb_image.o: stb_image.c.o
-.PHONY : stb_image.o
+stb_image.obj: stb_image.c.obj
+.PHONY : stb_image.obj
 
 # target to build an object file
-stb_image.c.o:
-	cd /home/david/skola/opengl/karel && $(MAKE) -f stb_image/CMakeFiles/stb_image.dir/build.make stb_image/CMakeFiles/stb_image.dir/stb_image.c.o
-.PHONY : stb_image.c.o
+stb_image.c.obj:
+	cd /home/david/skola/opengl/karel && $(MAKE) -f stb_image/CMakeFiles/stb_image.dir/build.make stb_image/CMakeFiles/stb_image.dir/stb_image.c.obj
+.PHONY : stb_image.c.obj
 
 stb_image.i: stb_image.c.i
 .PHONY : stb_image.i
@@ -142,7 +142,7 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... stb_image"
-	@echo "... stb_image.o"
+	@echo "... stb_image.obj"
 	@echo "... stb_image.i"
 	@echo "... stb_image.s"
 .PHONY : help

@@ -109,13 +109,13 @@ objLoader/fast:
 	cd /home/david/skola/opengl/karel && $(MAKE) -f objTester/CMakeFiles/objLoader.dir/build.make objTester/CMakeFiles/objLoader.dir/build
 .PHONY : objLoader/fast
 
-list.o: list.cpp.o
-.PHONY : list.o
+list.obj: list.cpp.obj
+.PHONY : list.obj
 
 # target to build an object file
-list.cpp.o:
-	cd /home/david/skola/opengl/karel && $(MAKE) -f objTester/CMakeFiles/objLoader.dir/build.make objTester/CMakeFiles/objLoader.dir/list.cpp.o
-.PHONY : list.cpp.o
+list.cpp.obj:
+	cd /home/david/skola/opengl/karel && $(MAKE) -f objTester/CMakeFiles/objLoader.dir/build.make objTester/CMakeFiles/objLoader.dir/list.cpp.obj
+.PHONY : list.cpp.obj
 
 list.i: list.cpp.i
 .PHONY : list.i
@@ -133,13 +133,13 @@ list.cpp.s:
 	cd /home/david/skola/opengl/karel && $(MAKE) -f objTester/CMakeFiles/objLoader.dir/build.make objTester/CMakeFiles/objLoader.dir/list.cpp.s
 .PHONY : list.cpp.s
 
-objLoader.o: objLoader.cpp.o
-.PHONY : objLoader.o
+objLoader.obj: objLoader.cpp.obj
+.PHONY : objLoader.obj
 
 # target to build an object file
-objLoader.cpp.o:
-	cd /home/david/skola/opengl/karel && $(MAKE) -f objTester/CMakeFiles/objLoader.dir/build.make objTester/CMakeFiles/objLoader.dir/objLoader.cpp.o
-.PHONY : objLoader.cpp.o
+objLoader.cpp.obj:
+	cd /home/david/skola/opengl/karel && $(MAKE) -f objTester/CMakeFiles/objLoader.dir/build.make objTester/CMakeFiles/objLoader.dir/objLoader.cpp.obj
+.PHONY : objLoader.cpp.obj
 
 objLoader.i: objLoader.cpp.i
 .PHONY : objLoader.i
@@ -157,13 +157,13 @@ objLoader.cpp.s:
 	cd /home/david/skola/opengl/karel && $(MAKE) -f objTester/CMakeFiles/objLoader.dir/build.make objTester/CMakeFiles/objLoader.dir/objLoader.cpp.s
 .PHONY : objLoader.cpp.s
 
-objTester.o: objTester.cpp.o
-.PHONY : objTester.o
+objTester.obj: objTester.cpp.obj
+.PHONY : objTester.obj
 
 # target to build an object file
-objTester.cpp.o:
-	cd /home/david/skola/opengl/karel && $(MAKE) -f objTester/CMakeFiles/objLoader.dir/build.make objTester/CMakeFiles/objLoader.dir/objTester.cpp.o
-.PHONY : objTester.cpp.o
+objTester.cpp.obj:
+	cd /home/david/skola/opengl/karel && $(MAKE) -f objTester/CMakeFiles/objLoader.dir/build.make objTester/CMakeFiles/objLoader.dir/objTester.cpp.obj
+.PHONY : objTester.cpp.obj
 
 objTester.i: objTester.cpp.i
 .PHONY : objTester.i
@@ -181,13 +181,13 @@ objTester.cpp.s:
 	cd /home/david/skola/opengl/karel && $(MAKE) -f objTester/CMakeFiles/objLoader.dir/build.make objTester/CMakeFiles/objLoader.dir/objTester.cpp.s
 .PHONY : objTester.cpp.s
 
-obj_parser.o: obj_parser.cpp.o
-.PHONY : obj_parser.o
+obj_parser.obj: obj_parser.cpp.obj
+.PHONY : obj_parser.obj
 
 # target to build an object file
-obj_parser.cpp.o:
-	cd /home/david/skola/opengl/karel && $(MAKE) -f objTester/CMakeFiles/objLoader.dir/build.make objTester/CMakeFiles/objLoader.dir/obj_parser.cpp.o
-.PHONY : obj_parser.cpp.o
+obj_parser.cpp.obj:
+	cd /home/david/skola/opengl/karel && $(MAKE) -f objTester/CMakeFiles/objLoader.dir/build.make objTester/CMakeFiles/objLoader.dir/obj_parser.cpp.obj
+.PHONY : obj_parser.cpp.obj
 
 obj_parser.i: obj_parser.cpp.i
 .PHONY : obj_parser.i
@@ -205,13 +205,13 @@ obj_parser.cpp.s:
 	cd /home/david/skola/opengl/karel && $(MAKE) -f objTester/CMakeFiles/objLoader.dir/build.make objTester/CMakeFiles/objLoader.dir/obj_parser.cpp.s
 .PHONY : obj_parser.cpp.s
 
-string_extra.o: string_extra.cpp.o
-.PHONY : string_extra.o
+string_extra.obj: string_extra.cpp.obj
+.PHONY : string_extra.obj
 
 # target to build an object file
-string_extra.cpp.o:
-	cd /home/david/skola/opengl/karel && $(MAKE) -f objTester/CMakeFiles/objLoader.dir/build.make objTester/CMakeFiles/objLoader.dir/string_extra.cpp.o
-.PHONY : string_extra.cpp.o
+string_extra.cpp.obj:
+	cd /home/david/skola/opengl/karel && $(MAKE) -f objTester/CMakeFiles/objLoader.dir/build.make objTester/CMakeFiles/objLoader.dir/string_extra.cpp.obj
+.PHONY : string_extra.cpp.obj
 
 string_extra.i: string_extra.cpp.i
 .PHONY : string_extra.i
@@ -238,19 +238,19 @@ help:
 	@echo "... edit_cache"
 	@echo "... objLoader"
 	@echo "... rebuild_cache"
-	@echo "... list.o"
+	@echo "... list.obj"
 	@echo "... list.i"
 	@echo "... list.s"
-	@echo "... objLoader.o"
+	@echo "... objLoader.obj"
 	@echo "... objLoader.i"
 	@echo "... objLoader.s"
-	@echo "... objTester.o"
+	@echo "... objTester.obj"
 	@echo "... objTester.i"
 	@echo "... objTester.s"
-	@echo "... obj_parser.o"
+	@echo "... obj_parser.obj"
 	@echo "... obj_parser.i"
 	@echo "... obj_parser.s"
-	@echo "... string_extra.o"
+	@echo "... string_extra.obj"
 	@echo "... string_extra.i"
 	@echo "... string_extra.s"
 .PHONY : help

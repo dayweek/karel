@@ -50,399 +50,402 @@ pos closest;
 vector<pair<int, int> > orders;
 class Node {
 public:
-	Node() {
-		free = true;
-		dist = 0;
-		dest = false;
-		visited = false;
-		crates_to_build = 0;
-		crates = 0;
-	}
-	bool free;
-	bool visited;
-	int dist;
-	bool dest;
-	int crates_to_build, crates;
+    Node() {
+        free = true;
+        dist = 0;
+        dest = false;
+        visited = false;
+        crates_to_build = 0;
+        crates = 0;
+    }
+    bool free;
+    bool visited;
+    int dist;
+    bool dest;
+    int crates_to_build, crates;
 } n ;
 
 struct Crate {
-	int x,y,level;
-	pair<int,int> otoceni;
+    int x,y,level;
+    pair<int,int> otoceni;
 };
 vector<Crate> crates(0);
 vector< vector <Node> > field(size, vector<Node>(size,n));
 bool is_in_field(int x, int y) {
-	if(x > -1 && x < size && 
-		y > -1 && y < size)
-		return true;
-	return false;
+    if (x > -1 && x < size &&
+            y > -1 && y < size)
+        return true;
+    return false;
 }
 
 
 void get_path(int x, int y, int i) {
-	if(!field[x][y].visited || field[x][y].dist > i) {
-		field[x][y].dist = i;
-		field[x][y].visited = true;
-	}
-	else return;
-	if(field[x][y].dest) {
-		if(closest.first == -1)
-			closest = make_pair<int, int>(x,y);
-		else if(field[x][y].dist < field[closest.first][closest.second].dist)
-			closest = make_pair<int, int>(x,y);
-		return;
-	}
-	if(is_in_field(x + 1, y) && field[x + 1][y].free)
-		get_path(x + 1, y, i + 1);
-	if(is_in_field(x, y + 1) && field[x][y + 1].free)
-		get_path(x, y + 1, i + 1);
-	if(is_in_field(x, y - 1) && field[x][y - 1].free)
-		get_path(x, y -1, i + 1);
-	if(is_in_field(x - 1, y) && field[x - 1][y].free)
-		get_path(x -1, y, i + 1);
+    if (!field[x][y].visited || field[x][y].dist > i) {
+        field[x][y].dist = i;
+        field[x][y].visited = true;
+    }
+    else return;
+    if (field[x][y].dest) {
+        if (closest.first == -1)
+            closest = make_pair<int, int>(x,y);
+        else if (field[x][y].dist < field[closest.first][closest.second].dist)
+            closest = make_pair<int, int>(x,y);
+        return;
+    }
+    if (is_in_field(x + 1, y) && field[x + 1][y].free)
+        get_path(x + 1, y, i + 1);
+    if (is_in_field(x, y + 1) && field[x][y + 1].free)
+        get_path(x, y + 1, i + 1);
+    if (is_in_field(x, y - 1) && field[x][y - 1].free)
+        get_path(x, y -1, i + 1);
+    if (is_in_field(x - 1, y) && field[x - 1][y].free)
+        get_path(x -1, y, i + 1);
 }
 void reset_field_for_find() {
-		for(int i = 0;i < size;i++)
-			for(int ii = 0;ii < size;ii++) {
-				field[i][ii].visited = false;
-				field[i][ii].dist = -1;
-				field[i][ii].dest = false;
-				if(field[i][ii].crates > 0)
-					field[i][ii].free = false;
-			}
-				
+    for (int i = 0;i < size;i++)
+        for (int ii = 0;ii < size;ii++) {
+            field[i][ii].visited = false;
+            field[i][ii].dist = -1;
+            field[i][ii].dest = false;
+            if (field[i][ii].crates > 0)
+                field[i][ii].free = false;
+        }
+
 }
 
 void backtrack(int x, int y , vector<pair<int, int> >& p) {
-	p.push_back(make_pair<int, int>(x,y));
-	int i = field[x][y].dist - 1;
-	if(i == -1)
-		return;
-	if(is_in_field(x + 1, y) && field[x + 1][y].dist  == i &&  field[x+1][y].visited)
-		backtrack(x + 1, y, p);
-	else if(is_in_field(x, y + 1) && field[x][y + 1].dist  == i &&  field[x][y + 1].visited)
-		backtrack(x, y + 1, p);
-	else if(is_in_field(x, y - 1) && field[x][y - 1].dist  == i && field[x][y - 1].visited)
-		backtrack(x, y -1,p);
-	else if(is_in_field(x - 1, y) && field[x - 1][y].dist  == i && field[x - 1][y].visited)
-		backtrack(x -1, y,p);
+    p.push_back(make_pair<int, int>(x,y));
+    int i = field[x][y].dist - 1;
+    if (i == -1)
+        return;
+    if (is_in_field(x + 1, y) && field[x + 1][y].dist  == i &&  field[x+1][y].visited)
+        backtrack(x + 1, y, p);
+    else if (is_in_field(x, y + 1) && field[x][y + 1].dist  == i &&  field[x][y + 1].visited)
+        backtrack(x, y + 1, p);
+    else if (is_in_field(x, y - 1) && field[x][y - 1].dist  == i && field[x][y - 1].visited)
+        backtrack(x, y -1,p);
+    else if (is_in_field(x - 1, y) && field[x - 1][y].dist  == i && field[x - 1][y].visited)
+        backtrack(x -1, y,p);
 }
 
- vector<pair<int, int> > find_path(int x1,int y1, int x2, int y2) {
-	closest = make_pair<int, int>(-1,-1);
-	reset_field_for_find();
-	field[x2][y2].dest = true;
-	get_path(x1,y1,0);
-	vector<pair<int, int> > p(0);
-	if(closest.first == -1)
-		return p;
-	else {
-		backtrack(closest.first, closest.second, p);
-		reverse(p.begin(), p.end());
-		vector<pair<int, int> > pp(0);
-		for(int i = 0;i < p.size() - 1;i++)
-			pp.push_back(make_pair<int,int>(p[i+1].first - p[i].first, p[i+1].second - p[i].second));
-		return pp;
-	}
+vector<pair<int, int> > find_path(int x1,int y1, int x2, int y2) {
+    closest = make_pair<int, int>(-1,-1);
+    reset_field_for_find();
+    field[x2][y2].dest = true;
+    get_path(x1,y1,0);
+    vector<pair<int, int> > p(0);
+    if (closest.first == -1)
+        return p;
+    else {
+        backtrack(closest.first, closest.second, p);
+        reverse(p.begin(), p.end());
+        vector<pair<int, int> > pp(0);
+        for (int i = 0;i < p.size() - 1;i++)
+            pp.push_back(make_pair<int,int>(p[i+1].first - p[i].first, p[i+1].second - p[i].second));
+        return pp;
+    }
 
 }
- vector<pair<int, int> > find_path_to_depo(int x1,int y1) {
-	closest = make_pair<int, int>(-1,-1);
-	reset_field_for_find();
-	for(int i = 0; i < size; i++)
-		field[size-10][i].dest = true;
-	get_path(x1,y1,0);
-	vector<pair<int, int> > p(0);
-	if(closest.first == -1)
-		return p;
-	else {
-		backtrack(closest.first, closest.second, p);
-		reverse(p.begin(), p.end());
-		vector<pair<int, int> > pp(0);
-		for(int i = 0;i < p.size() - 1;i++)
-			pp.push_back(make_pair<int,int>(p[i+1].first - p[i].first, p[i+1].second - p[i].second));
-		return pp;
-	}
+vector<pair<int, int> > find_path_to_depo(int x1,int y1) {
+    closest = make_pair<int, int>(-1,-1);
+    reset_field_for_find();
+    for (int i = 0; i < size; i++)
+        field[size-10][i].dest = true;
+    get_path(x1,y1,0);
+    vector<pair<int, int> > p(0);
+    if (closest.first == -1)
+        return p;
+    else {
+        backtrack(closest.first, closest.second, p);
+        reverse(p.begin(), p.end());
+        vector<pair<int, int> > pp(0);
+        for (int i = 0;i < p.size() - 1;i++)
+            pp.push_back(make_pair<int,int>(p[i+1].first - p[i].first, p[i+1].second - p[i].second));
+        return pp;
+    }
 
 }
 void draw_crate();
 void draw_podvozek();
 void draw_tyc(float vyska);
 void generate_orders() {
-	int ints[] = {0,0,0,0};
-	vector<int> p1 (ints, ints + sizeof(ints) / sizeof(int) );
-	int ints2[] = {0,3,2,1};
-	vector<int> p2 (ints2, ints2 + sizeof(ints2) / sizeof(int) );
-	int ints3[] = {0,2,0,0};
-	vector<int> p3 (ints3, ints3 + sizeof(ints3) / sizeof(int) );
-	int ints4[] = {0,1,0,0};
-	vector<int> p4 (ints4, ints4 + sizeof(ints4) / sizeof(int) );
-	vector<vector<int> > p;
-	p.push_back(p1);
-	p.push_back(p2);
-	p.push_back(p3);
-	p.push_back(p4);	
-	
-	for(int i = 0; i < p.size(); i++)
-		for(int ii = 0; ii < p[i].size(); ii++)
-			for(int d = 0; d < p[i][ii]; d++) {
-				orders.push_back(make_pair<int, int>(i, ii));
+    int ints[] = {0,0,0,0};
+    vector<int> p1 (ints, ints + sizeof(ints) / sizeof(int) );
+    int ints2[] = {0,3,2,1};
+    vector<int> p2 (ints2, ints2 + sizeof(ints2) / sizeof(int) );
+    int ints3[] = {0,2,0,0};
+    vector<int> p3 (ints3, ints3 + sizeof(ints3) / sizeof(int) );
+    int ints4[] = {0,1,0,0};
+    vector<int> p4 (ints4, ints4 + sizeof(ints4) / sizeof(int) );
+    vector<vector<int> > p;
+    p.push_back(p1);
+    p.push_back(p2);
+    p.push_back(p3);
+    p.push_back(p4);
 
-				field[i][ii].crates_to_build = p[i][ii];
-			}
-				random_shuffle ( orders.begin(), orders.end() );
-	
+    for (int i = 0; i < p.size(); i++)
+        for (int ii = 0; ii < p[i].size(); ii++)
+            for (int d = 0; d < p[i][ii]; d++) {
+                orders.push_back(make_pair<int, int>(i, ii));
+
+                field[i][ii].crates_to_build = p[i][ii];
+            }
+    random_shuffle ( orders.begin(), orders.end() );
+
 }
 void print_path(vector<pair<int, int> > p) {
-			cout << "path" << endl;
-	for(int i = 0; i < p.size(); i++) {
+    cout << "path" << endl;
+    for (int i = 0; i < p.size(); i++) {
 
-		cout << p[i].first << p[i].second << endl;
-	}
+        cout << p[i].first << p[i].second << endl;
+    }
 }
 
 class Robot {
 public:
-	pos start_pos;
-	Uint32 start_time;
-	vector<pos> path;
-	bool has_crate;
-	enum State { MOVEMENT, LIFT_UP, LIFT_DOWN, STORE, STOPPED } state;
-	void render() {
-		switch(state) { 
-		case MOVEMENT: 
-		{
-			if(path.size() == 0) {
-					if(to_depo()) {
-					print_path(path);
-					state = MOVEMENT;
-					has_crate = false;
-					render();
-				}
-			} else {
-				float vzdalenost = (globalTime - start_time) / 1000.0;
-				int policka = vzdalenost;
-				float x = start_pos.first; float y = start_pos.second;
-	//			print_path(path);
-				if(policka > path.size() - 1)
-					policka = path.size() - 1;
-				for(int i = 0; i < policka; i++) {
-					x += path[i].first;
-					y += path[i].second;
-				}
-				
-				if( policka == path.size() - 1) {
-					path_from_field();
-					start_time += policka * 1000.0;
-					//determine state
-					if(has_crate) {
-						state = LIFT_UP;
-						
-					}
-					else {
-						
-						start_pos = make_pair<int, int>(x,y);
-						if(where_to_put()) {
-							has_crate = true;
-							state = MOVEMENT;
-							
-							cout << "vychazi ze skladiste" << endl;
- 							print_path(path);
-						} else {
-							state = STOPPED;
-							cout << "zastaveny" << endl;
-						}
-					}
-					start_pos = make_pair<int, int>(x,y);
-					
-					render();
+    pos start_pos;
+    Uint32 start_time;
+    vector<pos> path;
+    bool has_crate;
+    enum State { MOVEMENT, LIFT_UP, LIFT_DOWN, STORE, STOPPED } state;
+    void render() {
+        switch (state) {
+        case MOVEMENT:
+        {
+            if (path.size() == 0) {
+                if (to_depo()) {
+                    print_path(path);
+                    state = MOVEMENT;
+                    has_crate = false;
+                    render();
+                }
+            } else {
+                float vzdalenost = (globalTime - start_time) / 1000.0;
+                int policka = vzdalenost;
+                float x = start_pos.first;
+                float y = start_pos.second;
+                //			print_path(path);
+                if (policka > path.size() - 1)
+                    policka = path.size() - 1;
+                for (int i = 0; i < policka; i++) {
+                    x += path[i].first;
+                    y += path[i].second;
+                }
 
-				} else {
-					x += (float)path[policka].first * (vzdalenost - floor(vzdalenost));
-					y += (float)path[policka].second * (vzdalenost - floor(vzdalenost));
-					glMatrixMode ( GL_MODELVIEW );
-					glPushMatrix();
-					glTranslatef(x + 0.5, 0, y + 0.5);
-					draw_podvozek();
-					if(has_crate)
-						draw_crate();
-					glPopMatrix();
-					
-					
-				}
-			}
-		}
-			break;
+                if ( policka == path.size() - 1) {
+                    path_from_field();
+                    start_time += policka * 1000.0;
+                    //determine state
+                    if (has_crate) {
+                        state = LIFT_UP;
 
-		case STOPPED: 
-		{
-			glMatrixMode ( GL_MODELVIEW );
-			glPushMatrix();
-			glTranslatef(start_pos.first + 0.5, 0, start_pos.second + 0.5);
-			if(has_crate)
-				draw_crate();
-			glPopMatrix();	
-			
-			glPushMatrix();
-			glTranslatef(start_pos.first + 0.5, 0, start_pos.second + 0.5);
-			draw_podvozek();
-			glPopMatrix();
-		}
-			break;
-		case LIFT_UP:
-		{
-			float patro = (globalTime - start_time) / 1000.0;
-			if(field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates < patro) {
-				start_time += field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates * 1000.0;
-				state = STORE;
-				cout << "vyklada" << endl;
-				render(); 
-			} else {
-				//nastav vysku
-				glMatrixMode ( GL_MODELVIEW );
-				glPushMatrix();
-				glTranslatef(start_pos.first + 0.5, patro, start_pos.second + 0.5);
-				draw_crate();
-				glPopMatrix();
-				
-				glPushMatrix();
-				glTranslatef(start_pos.first + 0.5, 0, start_pos.second + 0.5);
-				draw_podvozek();
-				draw_tyc(patro);
-				glPopMatrix();
-			}
-		}
-			break;
-		case STORE:
-		{
-			float time = (globalTime - start_time) / 1000.0;
-			if(time > 2) {
-				start_time +=  2000.0;
-				state = LIFT_DOWN;
-				field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates =
-				field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates + 1;
-				Crate c;
-				c.x = start_pos.first + path[path.size()-1].first;
-				c.y = start_pos.second + path[path.size()-1].second;
-				c.level = field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates -1;
-				c.otoceni = path[path.size()-1];
-				crates.push_back(c);
-				render(); 				
-			} else {
-				glMatrixMode ( GL_MODELVIEW );
-				glPushMatrix();
-				
-				if(path[path.size()-1].first == 1) {
-					glTranslatef(start_pos.first + 1.0, field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 0.5, start_pos.second + 0.5);
-					glRotatef(-time * 45, 0, 0, 1);
-					glTranslatef(-0.5, 0.5, 0);
-				}
-				if(path[path.size()-1].first == -1) {
-					glTranslatef(start_pos.first, field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 0.5, start_pos.second + 0.5);
-					glRotatef( time * 45, 0, 0, 1);
-					glTranslatef(0.5, 0.5, 0);
-				}					
-				
-				if(path[path.size()-1].second == 1) {
-					glTranslatef(start_pos.first + 0.5, field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 0.5, start_pos.second + 1);
-					glRotatef(time * 45, 1, 0, 0);
-					glTranslatef(0, 0.5, -0.5);
-				}
-				if(path[path.size()-1].second == -1) {
-					glTranslatef(start_pos.first + 0.5, field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 0.5, start_pos.second );
-					glRotatef(-time * 45, 1, 0, 0);
-					glTranslatef(0, 0.5, 0.5);
-				}				
-				draw_crate();
-				glPopMatrix();	
-				
-				glPushMatrix();
-				glTranslatef(start_pos.first + 0.5, 0, start_pos.second + 0.5);
-				draw_podvozek();
-				draw_tyc( field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates);
-				glPopMatrix();
-			}
-		}
-		break;
-		case LIFT_DOWN:
-		{
-			float patro = (globalTime - start_time) / 1000.0;
-			if(field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 1 < patro) {
-				//dalsi stav
-				if(to_depo()) {
+                    }
+                    else {
+
+                        start_pos = make_pair<int, int>(x,y);
+                        if (where_to_put()) {
+                            has_crate = true;
+                            state = MOVEMENT;
+
+                            cout << "vychazi ze skladiste" << endl;
+                            print_path(path);
+                        } else {
+                            state = STOPPED;
+                            cout << "zastaveny" << endl;
+                        }
+                    }
+                    start_pos = make_pair<int, int>(x,y);
+
+                    render();
+
+                } else {
+                    x += (float)path[policka].first * (vzdalenost - floor(vzdalenost));
+                    y += (float)path[policka].second * (vzdalenost - floor(vzdalenost));
+                    glMatrixMode ( GL_MODELVIEW );
+                    glPushMatrix();
+                    glTranslatef(x + 0.5, 0, y + 0.5);
+                    draw_podvozek();
+                    if (has_crate)
+                        draw_crate();
+                    glPopMatrix();
+
+
+                }
+            }
+        }
+        break;
+
+        case STOPPED:
+        {
+            glMatrixMode ( GL_MODELVIEW );
+            glPushMatrix();
+            glTranslatef(start_pos.first + 0.5, 0, start_pos.second + 0.5);
+            if (has_crate)
+                draw_crate();
+            glPopMatrix();
+
+            glPushMatrix();
+            glTranslatef(start_pos.first + 0.5, 0, start_pos.second + 0.5);
+            draw_podvozek();
+            glPopMatrix();
+        }
+        break;
+        case LIFT_UP:
+        {
+            float patro = (globalTime - start_time) / 1000.0;
+            if (field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates < patro) {
+                start_time += field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates * 1000.0;
+                state = STORE;
+                cout << "vyklada" << endl;
+                render();
+            } else {
+                //nastav vysku
+                glMatrixMode ( GL_MODELVIEW );
+                glPushMatrix();
+                glTranslatef(start_pos.first + 0.5, patro, start_pos.second + 0.5);
+                draw_crate();
+                glPopMatrix();
+
+                glPushMatrix();
+                glTranslatef(start_pos.first + 0.5, 0, start_pos.second + 0.5);
+                draw_podvozek();
+                draw_tyc(patro);
+                glPopMatrix();
+            }
+        }
+        break;
+        case STORE:
+        {
+            float time = (globalTime - start_time) / 1000.0;
+            if (time > 2) {
+                start_time +=  2000.0;
+                state = LIFT_DOWN;
+                field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates =
+                    field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates + 1;
+                Crate c;
+                c.x = start_pos.first + path[path.size()-1].first;
+                c.y = start_pos.second + path[path.size()-1].second;
+                c.level = field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates -1;
+                c.otoceni = path[path.size()-1];
+                crates.push_back(c);
+                render();
+            } else {
+                glMatrixMode ( GL_MODELVIEW );
+                glPushMatrix();
+
+                if (path[path.size()-1].first == 1) {
+                    glTranslatef(start_pos.first + 1.0, field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 0.5, start_pos.second + 0.5);
+                    glRotatef(-time * 45, 0, 0, 1);
+                    glTranslatef(-0.5, 0.5, 0);
+                }
+                if (path[path.size()-1].first == -1) {
+                    glTranslatef(start_pos.first, field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 0.5, start_pos.second + 0.5);
+                    glRotatef( time * 45, 0, 0, 1);
+                    glTranslatef(0.5, 0.5, 0);
+                }
+
+                if (path[path.size()-1].second == 1) {
+                    glTranslatef(start_pos.first + 0.5, field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 0.5, start_pos.second + 1);
+                    glRotatef(time * 45, 1, 0, 0);
+                    glTranslatef(0, 0.5, -0.5);
+                }
+                if (path[path.size()-1].second == -1) {
+                    glTranslatef(start_pos.first + 0.5, field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 0.5, start_pos.second );
+                    glRotatef(-time * 45, 1, 0, 0);
+                    glTranslatef(0, 0.5, 0.5);
+                }
+                draw_crate();
+                glPopMatrix();
+
+                glPushMatrix();
+                glTranslatef(start_pos.first + 0.5, 0, start_pos.second + 0.5);
+                draw_podvozek();
+                draw_tyc( field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates);
+                glPopMatrix();
+            }
+        }
+        break;
+        case LIFT_DOWN:
+        {
+            float patro = (globalTime - start_time) / 1000.0;
+            if (field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 1 < patro) {
+                //dalsi stav
+                if (to_depo()) {
 // 					print_path(path);
-					state = MOVEMENT;
-					start_time += (field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 1) * 1000.0;
-					has_crate = false;
-				}
-				render(); 
-			} else {
-				//nastav vysku
+                    state = MOVEMENT;
+                    start_time += (field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 1) * 1000.0;
+                    has_crate = false;
+                }
+                render();
+            } else {
+                //nastav vysku
 
-				glPushMatrix();
-				glTranslatef(start_pos.first + 0.5, 0, start_pos.second + 0.5);
-				draw_podvozek();
-				draw_tyc((field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 1) - patro);
-				glPopMatrix();
-			}
-		}
-			break;
-		}
+                glPushMatrix();
+                glTranslatef(start_pos.first + 0.5, 0, start_pos.second + 0.5);
+                draw_podvozek();
+                draw_tyc((field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 1) - patro);
+                glPopMatrix();
+            }
+        }
+        break;
+        }
 
 
-	}
+    }
 
-	bool where_to_put() {
+    bool where_to_put() {
 
-		vector<pair<int, int> >::iterator it;
+        vector<pair<int, int> >::iterator it;
 
-		vector<pair<int, int> > pp;
-		bool found = false;
-		int ii;
-		for(int i  = 0; i < orders.size(); i++) {
-			pp = find_path(start_pos.first, start_pos.second, orders[i].first, orders[i].second);
-			if(!pp.empty()) {
-				found = true;
-				ii = i;
-				break;
-			}
-		}
-		
-		path = pp;
-		path_to_field();
-		
-		if(found) {
-			vector<pair<int, int> >::iterator nth = orders.begin() + ii;
-			orders.erase(nth);
-			return true;
-		} return false;
-	}
-	bool to_depo() {
-		vector<pair<int, int> > pp;
-		pp = find_path_to_depo(start_pos.first, start_pos.second);
-		
-		path = pp;
-		path_to_field();
-		return true;
-	}
-	void path_from_field() {
-		int x = start_pos.first; int y = start_pos.second;
-		for(int i  = 0; i < path.size(); i++) {
-			field[x][y].free = true;
-			x += path[i].first;
-			y += path[i].second;
-		}
-			
-	}
-	void path_to_field() {
-		int x = start_pos.first; int y = start_pos.second;
-		for(int i  = 0; i < path.size(); i++) {
-			field[x][y].free = false;
-			x += path[i].first;
-			y += path[i].second;
-		}
-			
-	}
+        vector<pair<int, int> > pp;
+        bool found = false;
+        int ii;
+        for (int i  = 0; i < orders.size(); i++) {
+            pp = find_path(start_pos.first, start_pos.second, orders[i].first, orders[i].second);
+            if (!pp.empty()) {
+                found = true;
+                ii = i;
+                break;
+            }
+        }
+
+        path = pp;
+        path_to_field();
+
+        if (found) {
+            vector<pair<int, int> >::iterator nth = orders.begin() + ii;
+            orders.erase(nth);
+            return true;
+        } return false;
+    }
+    bool to_depo() {
+        vector<pair<int, int> > pp;
+        pp = find_path_to_depo(start_pos.first, start_pos.second);
+
+        path = pp;
+        path_to_field();
+        return true;
+    }
+    void path_from_field() {
+        int x = start_pos.first;
+        int y = start_pos.second;
+        for (int i  = 0; i < path.size(); i++) {
+            field[x][y].free = true;
+            x += path[i].first;
+            y += path[i].second;
+        }
+
+    }
+    void path_to_field() {
+        int x = start_pos.first;
+        int y = start_pos.second;
+        for (int i  = 0; i < path.size(); i++) {
+            field[x][y].free = false;
+            x += path[i].first;
+            y += path[i].second;
+        }
+
+    }
 };
 
 
@@ -777,12 +780,12 @@ void draw_crate() {
 void draw_podvozek() {
 //   glBindTexture(GL_TEXTURE_2D, crate_texture);
 //     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-glBindTexture(GL_TEXTURE_2D, NULL);
+    glBindTexture(GL_TEXTURE_2D, NULL);
 // glColorMaterial(GL_FRONT, GL_DIFFUSE);
 // float diffuse[] = {0.8, 0.6, 0.3};
 // glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse);
 // glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, diffuse);
-glColor3f(0.8, 0.6, 0.3);
+    glColor3f(0.8, 0.6, 0.3);
     glBegin ( GL_QUADS);
     // Front Face
     // Bottom Face
@@ -796,15 +799,15 @@ glColor3f(0.8, 0.6, 0.3);
     glTexCoord2f(1.0f, 0.0f);
     glVertex3f(-0.5f, -0.5f,  0.5f);	// Bottom Right Of The Texture and Quad
 
-	glEnd();
-	
+    glEnd();
+
 }
 void draw_tyc(float vyska) {
 
-glBindTexture(GL_TEXTURE_2D, NULL);
+    glBindTexture(GL_TEXTURE_2D, NULL);
 
-glColor3f(0.1, 0.1, 0.7);
-	
+    glColor3f(0.1, 0.1, 0.7);
+
     glBegin ( GL_QUADS);
     // Front Face
     // Bottom Face
@@ -870,14 +873,14 @@ glColor3f(0.1, 0.1, 0.7);
     glTexCoord2f(0.0f, 1.0f);
     glVertex3f(-0.2f,  -0.5f + vyska, -0.2f);	// Top Left Of The Texture and Quad
 
-	glEnd();
-	
+    glEnd();
+
 }
 void draw_depo() {
 
-glBindTexture(GL_TEXTURE_2D, NULL);
+    glBindTexture(GL_TEXTURE_2D, NULL);
 
-glColor3f(0.8, 0, 0);
+    glColor3f(0.8, 0, 0);
     glBegin ( GL_QUADS);
     // Front Face
     // Bottom Face
@@ -891,16 +894,16 @@ glColor3f(0.8, 0, 0);
     glTexCoord2f(1.0f, 0.0f);
     glVertex3f(11, -0.5f,  20);	// Bottom Right Of The Texture and Quad
 
-	glEnd();	
+    glEnd();
 }
 
 void draw_crates() {
-	for(int i = 0; i< crates.size(); i++) {
-		glPushMatrix();
-		glTranslatef(crates[i].x + 0.5, crates[i].level, crates[i].y + 0.5);
-		draw_crate();
-		glPopMatrix();	
-		
+    for (int i = 0; i< crates.size(); i++) {
+        glPushMatrix();
+        glTranslatef(crates[i].x + 0.5, crates[i].level, crates[i].y + 0.5);
+        draw_crate();
+        glPopMatrix();
+
 // 				if(crates[i].otoceni.first == 1) {
 // 					glTranslatef(crates[i].x + 3.0, field[crates[i].x ][crates[i].y ].crates - 0.5, crates[i].y + 1.5);
 // 					glRotatef(-90, 0, 0, 1);
@@ -910,8 +913,8 @@ void draw_crates() {
 // 					glTranslatef(crates[i].x + 2.0, field[crates[i].x ][crates[i].y ].crates - 0.5, crates[i].y + 1.5);
 // 					glRotatef(90, 0, 0, 1);
 // 					glTranslatef(0.5, 0.5, 0);
-// 				}					
-// 				
+// 				}
+//
 // 				if(crates[i].otoceni.second == 1) {
 // 					glTranslatef(crates[i].x +0.5, field[crates[i].x][crates[i].y ].crates - 0.5, crates[i].y );
 // 					glRotatef(90, 1, 0, 0);
@@ -921,8 +924,8 @@ void draw_crates() {
 // 					glTranslatef(crates[i].x + 0.5, field[crates[i].x][crates[i].y].crates - 0.5, crates[i].y );
 // 					glRotatef(-90, 1, 0, 0);
 // 					glTranslatef(0, 0.5, 0.5);
-// 				}	
-	}
+// 				}
+    }
 }
 static void draw_screen ( void ) {
 
@@ -953,8 +956,8 @@ static void draw_screen ( void ) {
 
 
 //draw_depo();
-draw_crates();
-	robot1.render();
+    draw_crates();
+    robot1.render();
 // 	robot2.render();
     if ( countp == 10 ) {
         cout << framesToPrint << " " << "FPS" << endl;
@@ -997,10 +1000,10 @@ void setup_lighting() {
 
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
-	float l = 1.0;
-	glEnable(GL_COLOR_MATERIAL);
+    float l = 1.0;
+    glEnable(GL_COLOR_MATERIAL);
 
-	glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE,&l);
+    glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE,&l);
 
 
     GLfloat light_position[] = {0,10,10,1.0};//w=0:infinite
@@ -1067,7 +1070,7 @@ void load_models() {
 
 
 int main ( int argc, char* argv[] ) {
-	srand ( unsigned ( time (NULL) ) );
+    srand ( unsigned ( time (NULL) ) );
     /* Information about the current video settings. */
     const SDL_VideoInfo* info = NULL;
     /* Dimensions of our window. */
@@ -1172,18 +1175,18 @@ int main ( int argc, char* argv[] ) {
     setup_opengl ( width, height );
     load_font();
     load_textures();
-	generate_orders();
-	robot1.start_pos = make_pair<int, int>(0,0);
-	robot1.start_time = globalTime;
-	robot1.state = Robot::MOVEMENT;
-	robot1.has_crate = false;
-	robot1.path = vector<pair<int, int> >(0);
+    generate_orders();
+    robot1.start_pos = make_pair<int, int>(0,0);
+    robot1.start_time = globalTime;
+    robot1.state = Robot::MOVEMENT;
+    robot1.has_crate = false;
+    robot1.path = vector<pair<int, int> >(0);
 
-	robot2.start_pos = make_pair<int, int>(0,0);
-	robot2.start_time = globalTime;
-	robot2.state = Robot::MOVEMENT;
-	robot2.has_crate = false;
-	robot2.path = vector<pair<int, int> >(0);	
+    robot2.start_pos = make_pair<int, int>(0,0);
+    robot2.start_time = globalTime;
+    robot2.state = Robot::MOVEMENT;
+    robot2.has_crate = false;
+    robot2.path = vector<pair<int, int> >(0);
     //load_models();
 
     /*

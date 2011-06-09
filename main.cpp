@@ -11,6 +11,7 @@
 #include <objLoader.h>
 #include <vector>
 #include <sstream>
+#include <fstream>
 #include <algorithm>
 #include "stb_image.h"
 #ifdef CROSS
@@ -168,20 +169,30 @@ vector<pair<int, int> > find_path_to_depo(int x1,int y1) {
 void draw_crate();
 void draw_podvozek();
 void draw_tyc(float vyska);
+
+
+vector<vector<int> > load_building() {
+	ifstream file;
+	string line;
+	unsigned int crates;
+	file.open("building.txt");
+	vector<vector<int> > surface(0);
+	if (file.is_open()) {
+		while(getline(file, line)) {
+			vector<int> row;
+			istringstream iss(line);
+			while (iss >> crates)
+			{
+				row.push_back(crates);
+			}
+			surface.push_back(row);
+		}
+		file.close();
+	}
+	return surface;
+}
 void generate_orders() {
-    int ints[] = {0,0,0,0};
-    vector<int> p1 (ints, ints + sizeof(ints) / sizeof(int) );
-    int ints2[] = {0,3,2,1};
-    vector<int> p2 (ints2, ints2 + sizeof(ints2) / sizeof(int) );
-    int ints3[] = {0,2,0,0};
-    vector<int> p3 (ints3, ints3 + sizeof(ints3) / sizeof(int) );
-    int ints4[] = {0,1,0,0};
-    vector<int> p4 (ints4, ints4 + sizeof(ints4) / sizeof(int) );
-    vector<vector<int> > p;
-    p.push_back(p1);
-    p.push_back(p2);
-    p.push_back(p3);
-    p.push_back(p4);
+	vector<vector<int> > p = load_building();
 
     for (int i = 0; i < p.size(); i++)
         for (int ii = 0; ii < p[i].size(); ii++)

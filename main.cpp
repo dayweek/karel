@@ -19,14 +19,14 @@
 #include "time.h"
 
 #endif
-
+using namespace std;
 int next_power ( int x ) {
     return pow ( 2, ceil ( log ( x ) /log ( 2 ) ) );
 }
 
 const int vbo_count = 10;
 uint vbos[vbo_count];
-uint* vbo_hand = vbos;
+int vbo_index;
 bool vbos_gen = false;
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
@@ -44,7 +44,7 @@ Uint32 amask = 0xff000000;
 
 TTF_Font *font;
 int countp = 0;
-using namespace std;
+
 objLoader *objData;
 Uint32 globalTime = 0;
 float frame = 0;
@@ -57,6 +57,36 @@ const int size = 20;
 typedef pair<int, int> pos;
 pos closest;
 vector<pair<int, int> > orders;
+
+class Model {
+public:
+	int vbo;
+	int vbo_array;
+	int vertex_index;
+	Model() {}
+    Model(string filename) {
+        objData = new objLoader();
+		
+        objData->load (const_cast<char*>(filename.c_str()));
+		vbo = vbo_index;
+		glBindBufferARB(GL_ARRAY_BUFFER_ARB, vbos[vbo]);
+		glBufferDataARB(GL_ARRAY_BUFFER_ARB, objData->vertexCount * sizeof(obj_vector) , objData->vertexList, GL_STATIC_DRAW_ARB);
+//         for ( int i = 0; i < objData->faceCount; i++ ) {
+//             for ( int ii = 0; ii < 4; ii++ ) {
+//                 obj_vector *v = objData->vertexList[objData->faceList[i]->vertex_index[ii]];
+//                 glVertex3f ( ( GLfloat ) v->e[0], ( GLfloat ) v->e[1], ( GLfloat ) v->e[2] );
+//             }
+//         }
+        
+
+		glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+		vbo_index++;
+        delete objData;
+        objData = 0;
+	}
+};
+
+Model hand;
 class Node {
 public:
     Node() {
@@ -1058,6 +1088,7 @@ void setup_matrices(int width, int height) {
 void setup_vbo() {
 	glGenBuffersARB(vbo_count, vbos);
 	vbos_gen = true;
+	vbo_index = 0;
 	
 }
 
@@ -1079,24 +1110,10 @@ void setup_opengl ( int width, int height ) {
 
 }
 
+
 void load_models() {
-// 	load_model(
-    objData = new objLoader();
-    objData->load ("untitled.obj");
-    cout << objData->faceCount;
+	hand = Model("untitled.obj");
 
-
-
-    glNewList ( 1, GL_COMPILE );
-    glBegin ( GL_QUADS );
-    for ( int i = 0; i < objData->faceCount; i++ ) {
-        for ( int ii = 0; ii < 4; ii++ ) {
-            obj_vector *v = objData->vertexList[objData->faceList[i]->vertex_index[ii]];
-            glVertex3f ( ( GLfloat ) v->e[0], ( GLfloat ) v->e[1], ( GLfloat ) v->e[2] );
-        }
-    }
-    glEnd();
-    glEndList();
 }
 
 

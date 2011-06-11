@@ -1,5 +1,6 @@
 #include <iostream>
 #include <math.h>
+#include <GL/glew.h>
 #include <SDL/SDL.h>
 #ifdef CROSS
 #include <SDL_ttf.h>
@@ -16,10 +17,17 @@
 #include "stb_image.h"
 #ifdef CROSS
 #include "time.h"
+
 #endif
+
 int next_power ( int x ) {
     return pow ( 2, ceil ( log ( x ) /log ( 2 ) ) );
 }
+
+const int vbo_count = 10;
+uint vbos[vbo_count];
+uint* vbo_hand = vbos;
+bool vbos_gen = false;
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 Uint32 rmask = 0xff000000;
@@ -665,13 +673,15 @@ static void quit ( int code ) {
             TTF_CloseFont ( font );
         TTF_Quit();
     }
-
-    delete ( objData );
+	if(objData)
+		delete ( objData );
     if (texture)
         glDeleteTextures ( 1,&texture );
     if (crate_texture)
         glDeleteTextures ( 1,&crate_texture );
     /* Exit program. */
+	if(vbos_gen)
+		glDeleteBuffersARB(vbo_count, vbos);
     SDL_Quit();
     exit ( code );
 }
@@ -1045,6 +1055,12 @@ void setup_matrices(int width, int height) {
     gluPerspective ( 60.0, ratio, 1.0, 1024.0 );
 }
 
+void setup_vbo() {
+	glGenBuffersARB(vbo_count, vbos);
+	vbos_gen = true;
+	
+}
+
 void setup_opengl ( int width, int height ) {
     timeMile = 0.0;
     glEnable(GL_DEPTH_TEST);
@@ -1054,14 +1070,17 @@ void setup_opengl ( int width, int height ) {
     glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+	setup_vbo();
     setup_texturing();
     setup_shading();
     setup_lighting();
+	
     setup_matrices(width, height);
 
 }
 
 void load_models() {
+// 	load_model(
     objData = new objLoader();
     objData->load ("untitled.obj");
     cout << objData->faceCount;
@@ -1078,7 +1097,6 @@ void load_models() {
     }
     glEnd();
     glEndList();
-    delete objData;
 }
 
 
@@ -1185,6 +1203,11 @@ int main ( int argc, char* argv[] ) {
      * At this point, we should have a properly setup
      * double-buffered window for use with OpenGL.
      */
+	GLenum err = glewInit();
+	if (GLEW_OK != err) {
+		cerr << "glew init failed:/" << endl;
+        quit(1);
+	}
     setup_opengl ( width, height );
     load_font();
     load_textures();
@@ -1217,5 +1240,5 @@ int main ( int argc, char* argv[] ) {
     }
 
     /* Never reached. */
-    return 0;
+    quit(0);
 }

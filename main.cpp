@@ -24,10 +24,6 @@ int next_power ( int x ) {
     return pow ( 2, ceil ( log ( x ) /log ( 2 ) ) );
 }
 
-const int vbo_count = 10;
-uint vbos[vbo_count];
-int vbo_index;
-bool vbos_gen = false;
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 Uint32 rmask = 0xff000000;
@@ -44,6 +40,8 @@ Uint32 amask = 0xff000000;
 
 TTF_Font *font;
 int countp = 0;
+const int list_count = 20;
+GLuint lists, start_list;
 
 objLoader *objData;
 Uint32 globalTime = 0;
@@ -60,29 +58,37 @@ vector<pair<int, int> > orders;
 
 class Model {
 public:
-	int vbo;
-	int vbo_array;
+
 	int vertex_index;
+	int vertex_count;
+	GLuint list;
+
 	Model() {}
     Model(string filename) {
         objData = new objLoader();
+
 		
         objData->load (const_cast<char*>(filename.c_str()));
-		vbo = vbo_index;
-		glBindBufferARB(GL_ARRAY_BUFFER_ARB, vbos[vbo]);
-		glBufferDataARB(GL_ARRAY_BUFFER_ARB, objData->vertexCount * sizeof(obj_vector) , objData->vertexList, GL_STATIC_DRAW_ARB);
-//         for ( int i = 0; i < objData->faceCount; i++ ) {
-//             for ( int ii = 0; ii < 4; ii++ ) {
-//                 obj_vector *v = objData->vertexList[objData->faceList[i]->vertex_index[ii]];
-//                 glVertex3f ( ( GLfloat ) v->e[0], ( GLfloat ) v->e[1], ( GLfloat ) v->e[2] );
-//             }
-//         }
-        
+		list = lists;
+		glNewList(lists++, GL_COMPILE);
+		glBegin(GL_QUADS);
+        for ( int i = 0; i < objData->faceCount; i++ ) {
+            for ( int ii = 0; ii < 4; ii++ ) {
+                obj_vector *v = objData->vertexList[objData->faceList[i]->vertex_index[ii]];
+                glVertex3f ( ( GLfloat ) v->e[0], ( GLfloat ) v->e[1], ( GLfloat ) v->e[2] );
+            }
+        }
+        glEnd();
+		glEndList();
 
-		glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
-		vbo_index++;
         delete objData;
         objData = 0;
+	}
+	void render() {
+		glCallList(list);
+	}
+	~Model() {
+		
 	}
 };
 
@@ -710,8 +716,7 @@ static void quit ( int code ) {
     if (crate_texture)
         glDeleteTextures ( 1,&crate_texture );
     /* Exit program. */
-	if(vbos_gen)
-		glDeleteBuffersARB(vbo_count, vbos);
+	glDeleteLists(start_list, list_count);
     SDL_Quit();
     exit ( code );
 }
@@ -1011,6 +1016,7 @@ static void draw_screen ( void ) {
 //draw_depo();
     draw_crates();
     robot1.render();
+	hand.render();
 // 	robot2.render();
     if ( countp == 10 ) {
         cout << framesToPrint << " " << "FPS" << endl;
@@ -1085,12 +1091,7 @@ void setup_matrices(int width, int height) {
     gluPerspective ( 60.0, ratio, 1.0, 1024.0 );
 }
 
-void setup_vbo() {
-	glGenBuffersARB(vbo_count, vbos);
-	vbos_gen = true;
-	vbo_index = 0;
-	
-}
+
 
 void setup_opengl ( int width, int height ) {
     timeMile = 0.0;
@@ -1101,7 +1102,9 @@ void setup_opengl ( int width, int height ) {
     glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-	setup_vbo();
+	
+	lists = glGenLists(list_count);
+	start_list = lists;
     setup_texturing();
     setup_shading();
     setup_lighting();

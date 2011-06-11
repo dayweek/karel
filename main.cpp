@@ -195,12 +195,14 @@ void generate_orders() {
 	vector<vector<int> > p = load_building();
 
     for (int i = 0; i < p.size(); i++)
-        for (int ii = 0; ii < p[i].size(); ii++)
+        for (int ii = 0; ii < p[i].size(); ii++) {
             for (int d = 0; d < p[i][ii]; d++) {
                 orders.push_back(make_pair<int, int>(i, ii));
 
-                field[i][ii].crates_to_build = p[i][ii];
+
             }
+            field[i][ii].crates_to_build = p[i][ii];
+        }
     random_shuffle ( orders.begin(), orders.end() );
 
 }
@@ -963,7 +965,7 @@ static void draw_screen ( void ) {
     gluLookAt ( 10, 10,10, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 );
     //glTranslatef ( timeMile/250.0 - 10,0,0 );
 // 	glutWireCube(2.0);
-    //glCallList ( 1 );
+    glCallList ( 1 );
 
 
 //draw_depo();
@@ -1061,15 +1063,15 @@ void setup_opengl ( int width, int height ) {
 
 void load_models() {
     objData = new objLoader();
-    objData->load ("test.obj");
+    objData->load ("untitled.obj");
     cout << objData->faceCount;
 
 
 
     glNewList ( 1, GL_COMPILE );
-    glBegin ( GL_TRIANGLES );
+    glBegin ( GL_QUADS );
     for ( int i = 0; i < objData->faceCount; i++ ) {
-        for ( int ii = 0; ii < 3; ii++ ) {
+        for ( int ii = 0; ii < 4; ii++ ) {
             obj_vector *v = objData->vertexList[objData->faceList[i]->vertex_index[ii]];
             glVertex3f ( ( GLfloat ) v->e[0], ( GLfloat ) v->e[1], ( GLfloat ) v->e[2] );
         }
@@ -1186,6 +1188,7 @@ int main ( int argc, char* argv[] ) {
     setup_opengl ( width, height );
     load_font();
     load_textures();
+	load_models();
     generate_orders();
     robot1.start_pos = make_pair<int, int>(0,0);
     robot1.start_time = globalTime;

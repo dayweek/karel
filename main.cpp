@@ -162,16 +162,50 @@ public:
 class Hand {
 public:
 	vector<Model> parts;
+	vector<float> alphas;
 	Hand(){
 		parts.push_back(Model("hand01.obj"));
 		parts.push_back(Model("hand02.obj"));
 		parts.push_back(Model("hand03.obj"));
 		parts.push_back(Model("hand04.obj"));
 		parts.push_back(Model("hand05.obj"));
+		alphas = vector<GLfloat>(5, 0.0);
+		alphas[0] = 20;
+		alphas[1] = -45;
+		alphas[2] = 90;
+		alphas[3] = -45;
+		alphas[4] = 0;
+		
+	}
+	void calculate_angles() {
+		
 	}
 	void render() {
-		for(int i = 0; i<parts.size(); i++)
-			parts[i].render();
+		calculate_angles();
+		glPushMatrix();
+		glRotatef(alphas[0], 0, 1, 0);
+		parts[0].render();
+		glTranslatef(0,1,0);
+		glRotatef(alphas[1],1,0,0);
+		parts[1].render();
+		glTranslatef(0,0,3);
+		glRotatef(alphas[2],1,0,0);
+		parts[1].render();
+		glTranslatef(0,0,3);
+		glRotatef(alphas[3],1,0,0);
+		parts[2].render();
+		glTranslatef(0,0,1);
+		glRotatef(alphas[4],1,0,0);
+		parts[3].render();
+		glTranslatef(0,0,0.25);
+		glPushMatrix();
+		glTranslatef(-0.5,0,0);
+		parts[4].render();
+		glPopMatrix();
+		glTranslatef(0.6,0,0);
+		parts[4].render();
+		glPopMatrix();
+
 	}
 };
 Hand* hand = 0;
@@ -1061,10 +1095,9 @@ static void draw_screen ( void ) {
     gluLookAt ( 10, 10,10, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 );
     //glTranslatef ( timeMile/250.0 - 10,0,0 );
 // 	glutWireCube(2.0);
-    glCallList ( 1 );
 
 
-//draw_depo();
+draw_depo();
     draw_crates();
 	hand->render();
     robot1.render();

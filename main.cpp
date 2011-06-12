@@ -24,6 +24,10 @@ int next_power ( int x ) {
     return pow ( 2, ceil ( log ( x ) /log ( 2 ) ) );
 }
 
+void draw_crate();
+void draw_podvozek();
+void draw_tyc(float vyska);
+
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 Uint32 rmask = 0xff000000;
@@ -158,11 +162,20 @@ public:
 // 		glDeleteTextures(1, &texture);
 	}
 };
-
+const double PI = 3.141592;
+float slow_down(float time) {
+	if(time < 0.5)
+		return 2*time*time;
+	else
+		return sin((time - 0.5) * PI) / 2.0 + 0.5;
+}
 class Hand {
 public:
 	vector<Model> parts;
-	vector<float> alphas;
+	vector<float> alphas, alphas1, alphas2;
+	bool has_crate;
+	float start_time;
+	float duration;
 	Hand(){
 		parts.push_back(Model("hand01.obj"));
 		parts.push_back(Model("hand02.obj"));
@@ -170,45 +183,84 @@ public:
 		parts.push_back(Model("hand04.obj"));
 		parts.push_back(Model("hand05.obj"));
 		alphas = vector<GLfloat>(5, 0.0);
-		alphas[0] = 20;
-		alphas[1] = -45;
-		alphas[2] = 90;
-		alphas[3] = -45;
+		alphas2 = vector<GLfloat>(5, 0.0);
+		alphas1 = vector<GLfloat>(5, 0.0);
+		alphas[0] = 0;
+		alphas[1] = -10;
+		alphas[2] = 35.0651 ;
+		alphas[3] = -25.0651;
 		alphas[4] = 0;
+		alphas1 = alphas;
+		
+		alphas2[0] = 270;
+		alphas2[1] = -80;
+		alphas2[2] = 50 ;
+		alphas2[3] = 120;
+		alphas2[4] = 180;
+		start_time = 0;
+		duration = 3000;
+		has_crate = false;
 		
 	}
 	void calculate_angles() {
-		
+		float rozdil = globalTime - start_time;
+		if(rozdil > duration) {
+			start_time += duration;
+			if(has_crate)
+				alphas = alphas1;
+			else
+				alphas = alphas2;
+			has_crate = !has_crate;
+		} else {
+			float ujdene = rozdil / duration;
+			ujdene = slow_down(ujdene);
+			if(has_crate) 
+				ujdene = 1.0 - ujdene;
+			for(int i = 0; i < 5;i++)
+				alphas[i] = ujdene * (alphas2[i] - alphas1[i]) + alphas1[i];
+		}
 	}
 	void render() {
 		calculate_angles();
 		glPushMatrix();
+		glTranslatef(0.5,0,-6.921904);
 		glRotatef(alphas[0], 0, 1, 0);
 		parts[0].render();
+		
 		glTranslatef(0,1,0);
 		glRotatef(alphas[1],1,0,0);
 		parts[1].render();
+		
 		glTranslatef(0,0,3);
 		glRotatef(alphas[2],1,0,0);
 		parts[1].render();
+		
 		glTranslatef(0,0,3);
 		glRotatef(alphas[3],1,0,0);
 		parts[2].render();
-		glTranslatef(0,0,1);
-		glRotatef(alphas[4],1,0,0);
+		
+		glTranslatef(0,0.25,1);
+		glRotatef(alphas[4],0,0,1);
 		parts[3].render();
+		
 		glTranslatef(0,0,0.25);
 		glPushMatrix();
 		glTranslatef(-0.5,0,0);
 		parts[4].render();
 		glPopMatrix();
+		glPushMatrix();
 		glTranslatef(0.6,0,0);
 		parts[4].render();
+		glPopMatrix();
+		glTranslatef(0,0,0.5);
+		if(has_crate)
+			draw_crate();
 		glPopMatrix();
 
 	}
 };
 Hand* hand = 0;
+
 class Node {
 public:
     Node() {
@@ -241,6 +293,8 @@ bool is_in_field(int x, int y) {
 
 
 void get_path(int x, int y, int i) {
+	if(!field[x][y].free && !field[x][y].dest)
+		return;
     if (!field[x][y].visited || field[x][y].dist > i) {
         field[x][y].dist = i;
         field[x][y].visited = true;
@@ -253,13 +307,13 @@ void get_path(int x, int y, int i) {
             closest = make_pair<int, int>(x,y);
         return;
     }
-    if (is_in_field(x + 1, y) && field[x + 1][y].free)
+    if (is_in_field(x + 1, y))
         get_path(x + 1, y, i + 1);
-    if (is_in_field(x, y + 1) && field[x][y + 1].free)
+    if (is_in_field(x, y + 1))
         get_path(x, y + 1, i + 1);
-    if (is_in_field(x, y - 1) && field[x][y - 1].free)
+    if (is_in_field(x, y - 1))
         get_path(x, y -1, i + 1);
-    if (is_in_field(x - 1, y) && field[x - 1][y].free)
+    if (is_in_field(x - 1, y))
         get_path(x -1, y, i + 1);
 }
 void reset_field_for_find() {
@@ -308,27 +362,9 @@ vector<pair<int, int> > find_path(int x1,int y1, int x2, int y2) {
 
 }
 vector<pair<int, int> > find_path_to_depo(int x1,int y1) {
-    closest = make_pair<int, int>(-1,-1);
-    reset_field_for_find();
-    for (int i = 0; i < size; i++)
-        field[size-10][i].dest = true;
-    get_path(x1,y1,0);
-    vector<pair<int, int> > p(0);
-    if (closest.first == -1)
-        return p;
-    else {
-        backtrack(closest.first, closest.second, p);
-        reverse(p.begin(), p.end());
-        vector<pair<int, int> > pp(0);
-        for (int i = 0;i < p.size() - 1;i++)
-            pp.push_back(make_pair<int,int>(p[i+1].first - p[i].first, p[i+1].second - p[i].second));
-        return pp;
-    }
-
+	return find_path(x1,y1,0,0);
 }
-void draw_crate();
-void draw_podvozek();
-void draw_tyc(float vyska);
+
 
 
 vector<vector<int> > load_building() {
@@ -357,11 +393,11 @@ void generate_orders() {
     for (int i = 0; i < p.size(); i++)
         for (int ii = 0; ii < p[i].size(); ii++) {
             for (int d = 0; d < p[i][ii]; d++) {
-                orders.push_back(make_pair<int, int>(i, ii));
+                orders.push_back(make_pair<int, int>(i+1, ii+1));
 
 
             }
-            field[i][ii].crates_to_build = p[i][ii];
+            field[i+1][ii+1].crates_to_build = p[i][ii];
         }
     random_shuffle ( orders.begin(), orders.end() );
 
@@ -380,74 +416,63 @@ public:
     Uint32 start_time;
     vector<pos> path;
     bool has_crate;
-    enum State { MOVEMENT, LIFT_UP, LIFT_DOWN, STORE, STOPPED } state;
-    void render() {
-        switch (state) {
-        case MOVEMENT:
+    enum State { MOVE_TO_DEPO, MOVE_TO_BUILDING, LIFT_UP, LIFT_DOWN, STORE, STOPPED } state;
+	Robot() {
+	    start_pos = make_pair<int, int>(0,5);
+		start_time = globalTime;
+		state = Robot::MOVE_TO_DEPO;
+		has_crate = false;
+		path = find_path_to_depo(0,5);	
+		print_path(path);
+	}
+	void get_state() {
+		switch (state) {
+        case MOVE_TO_DEPO:
         {
-            if (path.size() == 0) {
-                if (to_depo()) {
-                    print_path(path);
-                    state = MOVEMENT;
-                    has_crate = false;
-                    render();
-                }
-            } else {
+            float ujdene_sekundy = (globalTime - start_time) / 1000.0;
+			int policka = ujdene_sekundy;
+			if (policka >= path.size()) {
+				start_time += 1000 * (float) path.size();
+				if(where_to_put()) {
+					state = MOVE_TO_BUILDING;
+					has_crate = true;
+				}
+				else
+					state = STOPPED;
+			}
+			break;
+		}
+		}
+	}
+    void render() {
+		get_state();
+        switch (state) {
+        case MOVE_TO_DEPO:
+        {
                 float vzdalenost = (globalTime - start_time) / 1000.0;
                 int policka = vzdalenost;
                 float x = start_pos.first;
                 float y = start_pos.second;
-                //			print_path(path);
-                if (policka > path.size() - 1)
-                    policka = path.size() - 1;
                 for (int i = 0; i < policka; i++) {
                     x += path[i].first;
                     y += path[i].second;
                 }
 
-                if ( policka == path.size() - 1) {
-                    path_from_field();
-                    start_time += policka * 1000.0;
-                    //determine state
-                    if (has_crate) {
-                        state = LIFT_UP;
-
-                    }
-                    else {
-
-                        start_pos = make_pair<int, int>(x,y);
-                        if (where_to_put()) {
-                            has_crate = true;
-                            state = MOVEMENT;
-
-                            cout << "vychazi ze skladiste" << endl;
-                            print_path(path);
-                        } else {
-                            state = STOPPED;
-                            cout << "zastaveny" << endl;
-                        }
-                    }
-                    start_pos = make_pair<int, int>(x,y);
-
-                    render();
-
-                } else {
-                    x += (float)path[policka].first * (vzdalenost - floor(vzdalenost));
-                    y += (float)path[policka].second * (vzdalenost - floor(vzdalenost));
-                    glMatrixMode ( GL_MODELVIEW );
-                    glPushMatrix();
-                    glTranslatef(x + 0.5, 0, y + 0.5);
-                    draw_podvozek();
-                    if (has_crate)
-                        draw_crate();
-                    glPopMatrix();
-
-
-                }
+				x += (float)path[policka].first * (vzdalenost - floor(vzdalenost));
+				y += (float)path[policka].second * (vzdalenost - floor(vzdalenost));
+				glMatrixMode ( GL_MODELVIEW );
+				glPushMatrix();
+				glTranslatef(x, 0, y );
+				draw_podvozek();
+				if (has_crate)
+					draw_crate();
+				glPopMatrix();
+            break;
             }
-        }
-        break;
 
+
+
+/*
         case STOPPED:
         {
             glMatrixMode ( GL_MODELVIEW );
@@ -561,6 +586,7 @@ public:
             }
         }
         break;
+		*/
         }
 
 
@@ -583,7 +609,6 @@ public:
         }
 
         path = pp;
-        path_to_field();
 
         if (found) {
             vector<pair<int, int> >::iterator nth = orders.begin() + ii;
@@ -1023,19 +1048,19 @@ void draw_depo() {
 
     glBindTexture(GL_TEXTURE_2D, NULL);
 
-    glColor3f(0.8, 0, 0);
+    glColor3f(1, 0, 0);
     glBegin ( GL_QUADS);
     // Front Face
     // Bottom Face
     glNormal3f(0,-1,0);
     glTexCoord2f(1.0f, 1.0f);
-    glVertex3f(10, -0.5f, 0);	// Top Right Of The Texture and Quad
+    glVertex3f(0, 0, 0);	// Top Right Of The Texture and Quad
     glTexCoord2f(.0f, 1.0f);
-    glVertex3f( 11, -0.5f, 0);	// Top Left Of The Texture and Quad
+    glVertex3f( 0, 0, 1);	// Top Left Of The Texture and Quad
     glTexCoord2f(0.0f, 0.0f);
-    glVertex3f( 10, -0.5f,  20);	// Bottom Left Of The Texture and Quad
+    glVertex3f( 1, 0,  1);	// Bottom Left Of The Texture and Quad
     glTexCoord2f(1.0f, 0.0f);
-    glVertex3f(11, -0.5f,  20);	// Bottom Right Of The Texture and Quad
+    glVertex3f(1, 0,  0);	// Bottom Right Of The Texture and Quad
 
     glEnd();
 }
@@ -1098,6 +1123,7 @@ static void draw_screen ( void ) {
 
 
 draw_depo();
+
     draw_crates();
 	hand->render();
     robot1.render();
@@ -1316,18 +1342,7 @@ int main ( int argc, char* argv[] ) {
     load_textures();
 	load_models();
     generate_orders();
-    robot1.start_pos = make_pair<int, int>(0,0);
-    robot1.start_time = globalTime;
-    robot1.state = Robot::MOVEMENT;
-    robot1.has_crate = false;
-    robot1.path = vector<pair<int, int> >(0);
-
-    robot2.start_pos = make_pair<int, int>(0,0);
-    robot2.start_time = globalTime;
-    robot2.state = Robot::MOVEMENT;
-    robot2.has_crate = false;
-    robot2.path = vector<pair<int, int> >(0);
-    //load_models();
+	robot1 = Robot();
 
     /*
      * Now we want to begin our normal app process--

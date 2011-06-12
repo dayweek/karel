@@ -48,20 +48,50 @@ Uint32 globalTime = 0;
 float frame = 0;
 Uint32 timeMile = 0;
 float framesToPrint = 0.0;
-GLuint texture = 0;
 GLuint crate_texture = 0;
 
 const int size = 20;
 typedef pair<int, int> pos;
 pos closest;
 vector<pair<int, int> > orders;
+//TODO mipmap
+void load_texture(string filename, GLuint* texture) {
 
+    int x,y,n;
+    GLint tmp;
+
+    unsigned char *data = stbi_load ( filename.c_str(), &x, &y, &n, 0 );
+    if (!data)
+        cerr << "cannot load " << filename << endl;
+    else {
+        glGenTextures ( 1, texture );
+        glGetIntegerv(GL_TEXTURE_BINDING_2D, &tmp);
+        // ... process data if not NULL ...
+        // ... x = width, y = height, n = # 8-bit components per pixel ...
+        // ... replace '0' with '1'..'4' to force that many components per pixel
+
+
+
+//gen texture
+
+        glBindTexture ( GL_TEXTURE_2D, *texture );
+        glTexImage2D ( GL_TEXTURE_2D, 0, 3, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data );
+// when texture area is small, bilinear filter the closest mipmap
+        glTexParameterf ( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                          GL_LINEAR );
+// when texture area is large, bilinear filter the original
+        glTexParameterf ( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+        stbi_image_free ( data );
+        glBindTexture ( GL_TEXTURE_2D, tmp);
+    }
+}
 class Model {
 public:
 
 	int vertex_index;
 	int vertex_count;
 	GLuint list;
+	GLuint texture;
 
 	Model() {}
     Model(string filename) {
@@ -70,11 +100,22 @@ public:
 		
         objData->load (const_cast<char*>(filename.c_str()));
 		list = lists;
+		if(objData->materialCount > 0) {
+			string s(objData->materialList[0]->texture_filename);
+			s.erase(s.end()-1);
+			load_texture(s.c_str(),&texture);
+		}
 		glNewList(lists++, GL_COMPILE);
+
 		glBegin(GL_QUADS);
+
         for ( int i = 0; i < objData->faceCount; i++ ) {
             for ( int ii = 0; ii < 4; ii++ ) {
                 obj_vector *v = objData->vertexList[objData->faceList[i]->vertex_index[ii]];
+				obj_vector *t = objData->textureList[objData->faceList[i]->texture_index[ii]];
+				obj_vector *n = objData->normalList[objData->faceList[i]->normal_index[ii]];
+				glNormal3f(n->e[0], n->e[1], n->e[2]);
+				glTexCoord2f(t->e[0], t->e[1]);
                 glVertex3f ( ( GLfloat ) v->e[0], ( GLfloat ) v->e[1], ( GLfloat ) v->e[2] );
             }
         }
@@ -85,10 +126,12 @@ public:
         objData = 0;
 	}
 	void render() {
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 		glCallList(list);
 	}
 	~Model() {
-		
+// 		glDeleteTextures(1, &texture);
 	}
 };
 
@@ -603,42 +646,11 @@ void load_font() {
     }
 }
 
-//TODO mipmap
-void load_texture(string filename, GLuint* texture) {
 
-    int x,y,n;
-    GLint tmp;
-
-    unsigned char *data = stbi_load ( filename.c_str(), &x, &y, &n, 0 );
-    if (!data)
-        cerr << "cannot load " << filename << endl;
-    else {
-        glGenTextures ( 1, texture );
-        glGetIntegerv(GL_TEXTURE_BINDING_2D, &tmp);
-        // ... process data if not NULL ...
-        // ... x = width, y = height, n = # 8-bit components per pixel ...
-        // ... replace '0' with '1'..'4' to force that many components per pixel
-
-
-
-//gen texture
-
-        glBindTexture ( GL_TEXTURE_2D, *texture );
-        glTexImage2D ( GL_TEXTURE_2D, 0, 3, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data );
-// when texture area is small, bilinear filter the closest mipmap
-        glTexParameterf ( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                          GL_LINEAR );
-// when texture area is large, bilinear filter the original
-        glTexParameterf ( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-        stbi_image_free ( data );
-        glBindTexture ( GL_TEXTURE_2D, tmp);
-    }
-}
 
 void load_textures() {
 
     load_texture("crate.png", &crate_texture);
-    load_texture(string("test.png"), &texture);
 
 }
 
@@ -660,7 +672,7 @@ void renderImage() {
 //draw quad
     glColor3f ( 0.5, 0.6, 0.8 );
     glPolygonMode ( GL_FRONT_AND_BACK, GL_FILL );
-    glBindTexture ( GL_TEXTURE_2D, texture );
+//     glBindTexture ( GL_TEXTURE_2D, texture );
     glBegin ( GL_QUADS );
     glTexCoord2f ( 0.0f, 0.0f );
     glVertex3f ( 0.0f,0,-1 );
@@ -711,8 +723,6 @@ static void quit ( int code ) {
     }
 	if(objData)
 		delete ( objData );
-    if (texture)
-        glDeleteTextures ( 1,&texture );
     if (crate_texture)
         glDeleteTextures ( 1,&crate_texture );
     /* Exit program. */
@@ -1049,7 +1059,6 @@ static void draw_screen ( void ) {
 
 void setup_texturing() {
     glEnable ( GL_TEXTURE_2D );
-    glGenTextures ( 1, &texture );
 
 }
 void setup_shading() {

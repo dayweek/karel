@@ -416,6 +416,7 @@ public:
     Uint32 start_time;
     vector<pos> path;
     bool has_crate;
+	Model podvozek, plosina;
     enum State { MOVE_TO_DEPO, MOVE_TO_BUILDING, LIFT_UP, LIFT_DOWN, STORE, STOPPED } state;
 	Robot() {
 	    start_pos = make_pair<int, int>(0,5);
@@ -423,6 +424,8 @@ public:
 		state = Robot::MOVE_TO_DEPO;
 		has_crate = false;
 		path = find_path_to_depo(0,5);	
+		podvozek = Model("podvozek.obj");
+		plosina = Model("plosina.obj");
 		print_path(path);
 	}
 	void get_state() {
@@ -433,8 +436,12 @@ public:
 			int policka = ujdene_sekundy;
 			if (policka >= path.size()) {
 				start_time += 1000 * (float) path.size();
+				start_pos.first = 0;
+				start_pos.second = 0;
 				if(where_to_put()) {
 					state = MOVE_TO_BUILDING;
+					print_path(path);
+
 					has_crate = true;
 				}
 				else
@@ -442,7 +449,72 @@ public:
 			}
 			break;
 		}
+        case MOVE_TO_BUILDING:
+        {
+            float ujdene_sekundy = (globalTime - start_time) / 1000.0;
+			int policka = ujdene_sekundy;
+			if (policka >= path.size() - 1) {
+				start_time += 1000 * (float) (path.size() - 1);
+                int x = start_pos.first;
+                int y = start_pos.second;			
+                for (int i = 0; i < path.size() - 1; i++) {
+                    x += path[i].first;
+                    y += path[i].second;
+                }				
+                start_pos.first = x;
+				start_pos.second = y;
+				state = LIFT_UP;
+			}
+			break;
 		}
+        case LIFT_UP:
+        {
+            float patro = (globalTime - start_time) / 1000.0;
+            if (field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates <= patro) {
+                start_time += field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates * 1000.0;
+                state = STORE;
+                cout << "vyklada" << endl;
+			}
+			break;
+		}
+		case STORE:
+		{
+		    float time = (globalTime - start_time) / 1000.0;
+            if (time > 2.0) {
+                start_time +=  2000.0;
+                state = LIFT_DOWN;
+                field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates =
+                    field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates + 1;
+                field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].free = false;
+				Crate c;
+                c.x = start_pos.first + path[path.size()-1].first;
+                c.y = start_pos.second + path[path.size()-1].second;
+                c.level = field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates -1;
+                c.otoceni = path[path.size()-1];
+                crates.push_back(c);
+				has_crate = false;
+			}
+			break;
+		}
+		case LIFT_DOWN:
+        {
+            float patro = (globalTime - start_time) / 1000.0;
+			int crates = field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 1;
+            if (crates < patro) {
+                //dalsi stav
+                if (to_depo()) {
+// 					print_path(path);
+                    state = MOVE_TO_DEPO;
+                    start_time += (crates) * 1000.0;
+                }
+			} else {
+				state = STOPPED;
+				cout << "zastaveny";
+			}
+			break;
+		}
+		}
+		
 	}
     void render() {
 		get_state();
@@ -462,131 +534,135 @@ public:
 				y += (float)path[policka].second * (vzdalenost - floor(vzdalenost));
 				glMatrixMode ( GL_MODELVIEW );
 				glPushMatrix();
-				glTranslatef(x, 0, y );
-				draw_podvozek();
+				glTranslatef(x + 0.5, 0, y + 0.5);
+				podvozek.render();
+				plosina.render();
 				if (has_crate)
 					draw_crate();
 				glPopMatrix();
             break;
             }
+        case MOVE_TO_BUILDING:
+        {
+            float vzdalenost = (globalTime - start_time) / 1000.0;
+            int policka = vzdalenost;
+            float x = start_pos.first;
+            float y = start_pos.second;
+            for (int i = 0; i < policka; i++) {
+                x += path[i].first;
+                y += path[i].second;
+            }
+
+            x += (float)path[policka].first * (vzdalenost - floor(vzdalenost));
+            y += (float)path[policka].second * (vzdalenost - floor(vzdalenost));
+            glMatrixMode ( GL_MODELVIEW );
+            glPushMatrix();
+            glTranslatef(x + 0.5, 0, y +0.5 );
+            podvozek.render();
+            plosina.render();
+            glTranslatef(0, 0.5, 0 );
+            if (has_crate)
+                draw_crate();
+            glPopMatrix();
+            break;
+        }
 
 
 
-/*
+
         case STOPPED:
         {
             glMatrixMode ( GL_MODELVIEW );
             glPushMatrix();
-            glTranslatef(start_pos.first + 0.5, 0, start_pos.second + 0.5);
+            glTranslatef(start_pos.first + 0.5, 0.5, start_pos.second + 0.5);
             if (has_crate)
                 draw_crate();
             glPopMatrix();
 
             glPushMatrix();
             glTranslatef(start_pos.first + 0.5, 0, start_pos.second + 0.5);
-            draw_podvozek();
+            podvozek.render();
+			plosina.render();
             glPopMatrix();
+			break;
         }
-        break;
+     
         case LIFT_UP:
         {
             float patro = (globalTime - start_time) / 1000.0;
-            if (field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates < patro) {
-                start_time += field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates * 1000.0;
-                state = STORE;
-                cout << "vyklada" << endl;
-                render();
-            } else {
-                //nastav vysku
-                glMatrixMode ( GL_MODELVIEW );
-                glPushMatrix();
-                glTranslatef(start_pos.first + 0.5, patro, start_pos.second + 0.5);
-                draw_crate();
-                glPopMatrix();
+            glMatrixMode ( GL_MODELVIEW );
+            glPushMatrix();
+            glTranslatef(start_pos.first + 0.5, patro, start_pos.second + 0.5);
+            draw_crate();
+            glPopMatrix();
 
-                glPushMatrix();
-                glTranslatef(start_pos.first + 0.5, 0, start_pos.second + 0.5);
-                draw_podvozek();
-                draw_tyc(patro);
-                glPopMatrix();
-            }
+            glPushMatrix();
+            glTranslatef(start_pos.first + 0.5, 0, start_pos.second + 0.5);
+            podvozek.render();
+            glTranslatef(0,0.5,0);
+            draw_tyc(patro);
+            glTranslatef(0,patro-0.5,0);
+            plosina.render();
+            glPopMatrix();
+
+            break;
         }
-        break;
+     
         case STORE:
         {
-            float time = (globalTime - start_time) / 1000.0;
-            if (time > 2) {
-                start_time +=  2000.0;
-                state = LIFT_DOWN;
-                field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates =
-                    field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates + 1;
-                Crate c;
-                c.x = start_pos.first + path[path.size()-1].first;
-                c.y = start_pos.second + path[path.size()-1].second;
-                c.level = field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates -1;
-                c.otoceni = path[path.size()-1];
-                crates.push_back(c);
-                render();
-            } else {
+				float time = (globalTime - start_time) / 1000.0;
                 glMatrixMode ( GL_MODELVIEW );
                 glPushMatrix();
 
                 if (path[path.size()-1].first == 1) {
-                    glTranslatef(start_pos.first + 1.0, field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 0.5, start_pos.second + 0.5);
+                    glTranslatef(start_pos.first + 1.0, field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates, start_pos.second);
                     glRotatef(-time * 45, 0, 0, 1);
-                    glTranslatef(-0.5, 0.5, 0);
+                    glTranslatef(-0.5, 0.5, 0.5);
                 }
                 if (path[path.size()-1].first == -1) {
-                    glTranslatef(start_pos.first, field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 0.5, start_pos.second + 0.5);
+                    glTranslatef(start_pos.first, field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates, start_pos.second);
                     glRotatef( time * 45, 0, 0, 1);
-                    glTranslatef(0.5, 0.5, 0);
+                    glTranslatef(0.5, 0.5, 0.5);
                 }
 
                 if (path[path.size()-1].second == 1) {
-                    glTranslatef(start_pos.first + 0.5, field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 0.5, start_pos.second + 1);
+                    glTranslatef(start_pos.first, field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates, start_pos.second + 1.0);
                     glRotatef(time * 45, 1, 0, 0);
-                    glTranslatef(0, 0.5, -0.5);
+                    glTranslatef(0.5, 0.5, -0.5);
                 }
                 if (path[path.size()-1].second == -1) {
-                    glTranslatef(start_pos.first + 0.5, field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 0.5, start_pos.second );
+                    glTranslatef(start_pos.first, field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates, start_pos.second  );
                     glRotatef(-time * 45, 1, 0, 0);
-                    glTranslatef(0, 0.5, 0.5);
+                    glTranslatef(0.5, 0.5, 0.5);
                 }
                 draw_crate();
                 glPopMatrix();
 
                 glPushMatrix();
                 glTranslatef(start_pos.first + 0.5, 0, start_pos.second + 0.5);
-                draw_podvozek();
+                podvozek.render();
+				
+				glTranslatef(0,0.5,0);
                 draw_tyc( field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates);
+				glTranslatef(0,field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 0.5,0);
+				plosina.render();
                 glPopMatrix();
-            }
+            break;
         }
-        break;
         case LIFT_DOWN:
         {
-            float patro = (globalTime - start_time) / 1000.0;
-            if (field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 1 < patro) {
-                //dalsi stav
-                if (to_depo()) {
-// 					print_path(path);
-                    state = MOVEMENT;
-                    start_time += (field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 1) * 1000.0;
-                    has_crate = false;
-                }
-                render();
-            } else {
                 //nastav vysku
-
+				float patro = (globalTime - start_time) / 1000.0;
                 glPushMatrix();
                 glTranslatef(start_pos.first + 0.5, 0, start_pos.second + 0.5);
-                draw_podvozek();
+                podvozek.render();
+				glTranslatef(0,0.5,0);
                 draw_tyc((field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 1) - patro);
+				glTranslatef(0,(field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 1) - patro -0.5,0);
+				plosina.render();
                 glPopMatrix();
-            }
         }
-        break;
-		*/
+		
         }
 
 
@@ -621,33 +697,32 @@ public:
         pp = find_path_to_depo(start_pos.first, start_pos.second);
 
         path = pp;
-        path_to_field();
         return true;
     }
-    void path_from_field() {
-        int x = start_pos.first;
-        int y = start_pos.second;
-        for (int i  = 0; i < path.size(); i++) {
-            field[x][y].free = true;
-            x += path[i].first;
-            y += path[i].second;
-        }
-
-    }
-    void path_to_field() {
-        int x = start_pos.first;
-        int y = start_pos.second;
-        for (int i  = 0; i < path.size(); i++) {
-            field[x][y].free = false;
-            x += path[i].first;
-            y += path[i].second;
-        }
-
-    }
+//     void path_from_field() {
+//         int x = start_pos.first;
+//         int y = start_pos.second;
+//         for (int i  = 0; i < path.size(); i++) {
+//             field[x][y].free = true;
+//             x += path[i].first;
+//             y += path[i].second;
+//         }
+// 
+//     }
+//     void path_to_field() {
+//         int x = start_pos.first;
+//         int y = start_pos.second;
+//         for (int i  = 0; i < path.size(); i++) {
+//             field[x][y].free = false;
+//             x += path[i].first;
+//             y += path[i].second;
+//         }
+// 
+//     }
 };
 
 
-Robot robot1, robot2;
+Robot robot1;
 
 string getDigits ( float fps ) {
     int f = fps;
@@ -945,31 +1020,7 @@ void draw_crate() {
 
 }
 
-void draw_podvozek() {
-//   glBindTexture(GL_TEXTURE_2D, crate_texture);
-//     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    glBindTexture(GL_TEXTURE_2D, NULL);
-// glColorMaterial(GL_FRONT, GL_DIFFUSE);
-// float diffuse[] = {0.8, 0.6, 0.3};
-// glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse);
-// glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, diffuse);
-    glColor3f(0.8, 0.6, 0.3);
-    glBegin ( GL_QUADS);
-    // Front Face
-    // Bottom Face
-    glNormal3f(0,-1,0);
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex3f(-0.5f, -0.5f, -0.5f);	// Top Right Of The Texture and Quad
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex3f( 0.5f, -0.5f, -0.5f);	// Top Left Of The Texture and Quad
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex3f( 0.5f, -0.5f,  0.5f);	// Bottom Left Of The Texture and Quad
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex3f(-0.5f, -0.5f,  0.5f);	// Bottom Right Of The Texture and Quad
 
-    glEnd();
-
-}
 void draw_tyc(float vyska) {
 
     glBindTexture(GL_TEXTURE_2D, NULL);
@@ -1068,31 +1119,32 @@ void draw_depo() {
 void draw_crates() {
     for (int i = 0; i< crates.size(); i++) {
         glPushMatrix();
-        glTranslatef(crates[i].x + 0.5, crates[i].level, crates[i].y + 0.5);
-        draw_crate();
-        glPopMatrix();
+glTranslatef(crates[i].x + 0.5 , crates[i].level + 0.5, crates[i].y + 0.5);
 
-// 				if(crates[i].otoceni.first == 1) {
-// 					glTranslatef(crates[i].x + 3.0, field[crates[i].x ][crates[i].y ].crates - 0.5, crates[i].y + 1.5);
-// 					glRotatef(-90, 0, 0, 1);
-// 					glTranslatef(-0.5, 0.5, 0);
-// 				}
-// 				if(crates[i].otoceni.first == -1) {
-// 					glTranslatef(crates[i].x + 2.0, field[crates[i].x ][crates[i].y ].crates - 0.5, crates[i].y + 1.5);
-// 					glRotatef(90, 0, 0, 1);
-// 					glTranslatef(0.5, 0.5, 0);
-// 				}
-//
-// 				if(crates[i].otoceni.second == 1) {
-// 					glTranslatef(crates[i].x +0.5, field[crates[i].x][crates[i].y ].crates - 0.5, crates[i].y );
-// 					glRotatef(90, 1, 0, 0);
-// 					glTranslatef(0, 0.5, -0.5);
-// 				}
-// 				if(crates[i].otoceni.second == -1) {
-// 					glTranslatef(crates[i].x + 0.5, field[crates[i].x][crates[i].y].crates - 0.5, crates[i].y );
-// 					glRotatef(-90, 1, 0, 0);
-// 					glTranslatef(0, 0.5, 0.5);
-// 				}
+//         if (crates[i].otoceni.first == 1) {
+//             glTranslatef(crates[i].x, field[crates[i].x ][crates[i].y ].crates, crates[i].y );
+//             glRotatef(-90, 0, 0, 1);
+//             glTranslatef(-0.5, 0.5, 0.5);
+//         }
+//         if (crates[i].otoceni.first == -1) {
+//             glTranslatef(crates[i].x + 1.0, field[crates[i].x ][crates[i].y ].crates , crates[i].y );
+//             glRotatef(90, 0, 0, 1);
+//             glTranslatef(0.5, 0.5, 0.5);
+//         }
+// 
+//         if (crates[i].otoceni.second == 1) {
+//             glTranslatef(crates[i].x + 1.0, field[crates[i].x][crates[i].y ].crates, crates[i].y + 1.0 );
+//             glRotatef(90, 1, 0, 0);
+//             glTranslatef(0.5, 0.5, -0.5);
+//         }
+//         if (crates[i].otoceni.second == -1) {
+//             glTranslatef(crates[i].x, field[crates[i].x][crates[i].y].crates , crates[i].y + 1.0);
+//             glRotatef(-90, 1, 0, 0);
+//             glTranslatef(0.5, 0.5, 0.5);
+//         }
+
+	    draw_crate();
+        glPopMatrix();
     }
 }
 static void draw_screen ( void ) {

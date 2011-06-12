@@ -90,7 +90,8 @@ public:
 
 	int vertex_index;
 	int vertex_count;
-	GLuint list;
+	GLuint triangle_list, quad_list;
+	
 	GLuint texture;
 
 	Model() {}
@@ -99,36 +100,55 @@ public:
 
 		
         objData->load (const_cast<char*>(filename.c_str()));
-		list = lists;
+
 		if(objData->materialCount > 0) {
 			string s(objData->materialList[0]->texture_filename);
 			s.erase(s.end()-1);
 			load_texture(s.c_str(),&texture);
 		}
+		quad_list = lists;
 		glNewList(lists++, GL_COMPILE);
-
 		glBegin(GL_QUADS);
-
         for ( int i = 0; i < objData->faceCount; i++ ) {
-            for ( int ii = 0; ii < 4; ii++ ) {
+            for ( int ii = 0; ii < objData->faceList[i]->vertex_count; ii++ ) {
                 obj_vector *v = objData->vertexList[objData->faceList[i]->vertex_index[ii]];
 				obj_vector *t = objData->textureList[objData->faceList[i]->texture_index[ii]];
 				obj_vector *n = objData->normalList[objData->faceList[i]->normal_index[ii]];
-				glNormal3f(n->e[0], n->e[1], n->e[2]);
-				glTexCoord2f(t->e[0], t->e[1]);
-                glVertex3f ( ( GLfloat ) v->e[0], ( GLfloat ) v->e[1], ( GLfloat ) v->e[2] );
+				if(objData->faceList[i]->vertex_count == 4) {
+					glNormal3f(n->e[0], n->e[1], n->e[2]);
+					glTexCoord2f(t->e[0], t->e[1]);
+					glVertex3f ( ( GLfloat ) v->e[0], ( GLfloat ) v->e[1], ( GLfloat ) v->e[2] );
+				}
             }
         }
         glEnd();
 		glEndList();
 
+		triangle_list = lists;
+		glNewList(lists++, GL_COMPILE);
+		glBegin(GL_TRIANGLES);
+        for ( int i = 0; i < objData->faceCount; i++ ) {
+            for ( int ii = 0; ii < objData->faceList[i]->vertex_count; ii++ ) {
+                obj_vector *v = objData->vertexList[objData->faceList[i]->vertex_index[ii]];
+				obj_vector *t = objData->textureList[objData->faceList[i]->texture_index[ii]];
+				obj_vector *n = objData->normalList[objData->faceList[i]->normal_index[ii]];
+				if(objData->faceList[i]->vertex_count == 3) {
+					glNormal3f(n->e[0], n->e[1], n->e[2]);
+					glTexCoord2f(t->e[0], t->e[1]);
+					glVertex3f ( ( GLfloat ) v->e[0], ( GLfloat ) v->e[1], ( GLfloat ) v->e[2] );
+				}
+            }
+        }
+        glEnd();
+		glEndList();
         delete objData;
         objData = 0;
 	}
 	void render() {
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		glCallList(list);
+		glCallList(quad_list);
+		glCallList(triangle_list);
 	}
 	~Model() {
 // 		glDeleteTextures(1, &texture);

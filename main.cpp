@@ -112,11 +112,15 @@ public:
         for ( int i = 0; i < objData->faceCount; i++ ) {
             for ( int ii = 0; ii < objData->faceList[i]->vertex_count; ii++ ) {
                 obj_vector *v = objData->vertexList[objData->faceList[i]->vertex_index[ii]];
-				obj_vector *t = objData->textureList[objData->faceList[i]->texture_index[ii]];
+				//if no texture?
+				;
 				obj_vector *n = objData->normalList[objData->faceList[i]->normal_index[ii]];
 				if(objData->faceList[i]->vertex_count == 4) {
 					glNormal3f(n->e[0], n->e[1], n->e[2]);
-					glTexCoord2f(t->e[0], t->e[1]);
+					if(objData->faceList[i]->texture_index[ii] != -1) {
+						obj_vector *t = objData->textureList[objData->faceList[i]->texture_index[ii]];
+						glTexCoord2f(t->e[0], t->e[1]);
+					}
 					glVertex3f ( ( GLfloat ) v->e[0], ( GLfloat ) v->e[1], ( GLfloat ) v->e[2] );
 				}
             }
@@ -155,7 +159,22 @@ public:
 	}
 };
 
-Model hand;
+class Hand {
+public:
+	vector<Model> parts;
+	Hand(){
+		parts.push_back(Model("hand01.obj"));
+		parts.push_back(Model("hand02.obj"));
+		parts.push_back(Model("hand03.obj"));
+		parts.push_back(Model("hand04.obj"));
+		parts.push_back(Model("hand05.obj"));
+	}
+	void render() {
+		for(int i = 0; i<parts.size(); i++)
+			parts[i].render();
+	}
+};
+Hand* hand = 0;
 class Node {
 public:
     Node() {
@@ -748,6 +767,8 @@ static void quit ( int code ) {
     /* Exit program. */
 	glDeleteLists(start_list, list_count);
     SDL_Quit();
+	if(hand)
+		delete hand;
     exit ( code );
 }
 
@@ -1045,8 +1066,8 @@ static void draw_screen ( void ) {
 
 //draw_depo();
     draw_crates();
+	hand->render();
     robot1.render();
-	hand.render();
 // 	robot2.render();
     if ( countp == 10 ) {
         cout << framesToPrint << " " << "FPS" << endl;
@@ -1144,7 +1165,7 @@ void setup_opengl ( int width, int height ) {
 
 
 void load_models() {
-	hand = Model("untitled.obj");
+	hand = new Hand();
 
 }
 

@@ -28,6 +28,7 @@ void draw_crate();
 void draw_podvozek();
 void draw_tyc(float vyska);
 
+bool predej = false;
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 Uint32 rmask = 0xff000000;
@@ -52,7 +53,9 @@ Uint32 globalTime = 0;
 float frame = 0;
 Uint32 timeMile = 0;
 float framesToPrint = 0.0;
-GLuint crate_texture = 0;
+int crate_texture_index = 0;
+GLuint textures[20];
+int textures_index = 0;
 
 const int size = 20;
 typedef pair<int, int> pos;
@@ -68,7 +71,6 @@ void load_texture(string filename, GLuint* texture) {
     if (!data)
         cerr << "cannot load " << filename << endl;
     else {
-        glGenTextures ( 1, texture );
         glGetIntegerv(GL_TEXTURE_BINDING_2D, &tmp);
         // ... process data if not NULL ...
         // ... x = width, y = height, n = # 8-bit components per pixel ...
@@ -95,8 +97,7 @@ public:
 	int vertex_index;
 	int vertex_count;
 	GLuint triangle_list, quad_list;
-	
-	GLuint texture;
+	int ti;
 
 	Model() {}
     Model(string filename) {
@@ -104,11 +105,13 @@ public:
 
 		
         objData->load (const_cast<char*>(filename.c_str()));
-
+		ti = -1;
 		if(objData->materialCount > 0) {
 			string s(objData->materialList[0]->texture_filename);
 			s.erase(s.end()-1);
-			load_texture(s.c_str(),&texture);
+			ti = textures_index;
+			load_texture(s.c_str(),textures + ti);
+			textures_index++;
 		}
 		quad_list = lists;
 		glNewList(lists++, GL_COMPILE);
@@ -153,7 +156,8 @@ public:
         objData = 0;
 	}
 	void render() {
-		glBindTexture(GL_TEXTURE_2D, texture);
+		if(ti > -1) 
+			glBindTexture(GL_TEXTURE_2D, textures[ti]);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 		glCallList(quad_list);
 		glCallList(triangle_list);
@@ -203,24 +207,32 @@ public:
 		
 	}
 	void calculate_angles() {
-		float rozdil = globalTime - start_time;
-		if(rozdil > duration) {
-			start_time += duration;
+        if (predej) {
+            float rozdil = globalTime - start_time;
+            if (rozdil > 2*duration) {
+                predej = false;
+				has_crate = false;
+                return;
+            }
+            if (rozdil > duration) 
+                has_crate = true;
+
+			float ujdene ;
 			if(has_crate)
-				alphas = alphas1;
-			else
-				alphas = alphas2;
-			has_crate = !has_crate;
-		} else {
-			float ujdene = rozdil / duration;
+				ujdene = (rozdil - duration)/ duration;
+			else 
+				ujdene = rozdil / duration;
 			ujdene = slow_down(ujdene);
-			if(has_crate) 
+			if (has_crate)
 				ujdene = 1.0 - ujdene;
-			for(int i = 0; i < 5;i++)
+			for (int i = 0; i < 5;i++)
 				alphas[i] = ujdene * (alphas2[i] - alphas1[i]) + alphas1[i];
-		}
+            
+        } else
+            alphas = alphas1;
 	}
 	void render() {
+
 		calculate_angles();
 		glPushMatrix();
 		glTranslatef(0.5,0,-6.921904);
@@ -417,7 +429,7 @@ public:
     vector<pos> path;
     bool has_crate;
 	Model podvozek, plosina;
-    enum State { MOVE_TO_DEPO, MOVE_TO_BUILDING, LIFT_UP, LIFT_DOWN, STORE, STOPPED } state;
+    enum State { MOVE_TO_DEPO, MOVE_TO_BUILDING, LIFT_UP, LIFT_DOWN, STORE, STOPPED, WAIT } state;
 	Robot() {
 	    start_pos = make_pair<int, int>(0,5);
 		start_time = globalTime;
@@ -439,13 +451,15 @@ public:
 				start_pos.first = 0;
 				start_pos.second = 0;
 				if(where_to_put()) {
-					state = MOVE_TO_BUILDING;
-					print_path(path);
+					predej = true;
+					state = WAIT;
+					hand->start_time = globalTime;
 
-					has_crate = true;
 				}
-				else
+				else {
 					state = STOPPED;
+					cout << "zastaveny";
+				}
 			}
 			break;
 		}
@@ -500,16 +514,16 @@ public:
         {
             float patro = (globalTime - start_time) / 1000.0;
 			int crates = field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 1;
-            if (crates < patro) {
+            if ((float)crates < patro) {
                 //dalsi stav
                 if (to_depo()) {
 // 					print_path(path);
                     state = MOVE_TO_DEPO;
                     start_time += (crates) * 1000.0;
-                }
-			} else {
-				state = STOPPED;
-				cout << "zastaveny";
+				} else {
+					state = STOPPED;
+					cout << "zastaveny";
+				}
 			}
 			break;
 		}
@@ -592,16 +606,20 @@ public:
             float patro = (globalTime - start_time) / 1000.0;
             glMatrixMode ( GL_MODELVIEW );
             glPushMatrix();
-            glTranslatef(start_pos.first + 0.5, patro, start_pos.second + 0.5);
+            glTranslatef(start_pos.first + 0.5, patro + 0.5, start_pos.second + 0.5);
             draw_crate();
             glPopMatrix();
 
             glPushMatrix();
             glTranslatef(start_pos.first + 0.5, 0, start_pos.second + 0.5);
             podvozek.render();
-            glTranslatef(0,0.5,0);
+			
+			glPushMatrix();
+            glTranslatef(0,0.375,0);
             draw_tyc(patro);
-            glTranslatef(0,patro-0.5,0);
+			glPopMatrix();
+			
+			glTranslatef(0, patro,0);
             plosina.render();
             glPopMatrix();
 
@@ -641,10 +659,11 @@ public:
                 glPushMatrix();
                 glTranslatef(start_pos.first + 0.5, 0, start_pos.second + 0.5);
                 podvozek.render();
-				
-				glTranslatef(0,0.5,0);
-                draw_tyc( field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates);
-				glTranslatef(0,field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 0.5,0);
+				glPushMatrix();
+				glTranslatef(0,0.375,0);
+                draw_tyc( field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates );
+				glPopMatrix();
+				glTranslatef(0,field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates,0);
 				plosina.render();
                 glPopMatrix();
             break;
@@ -656,13 +675,39 @@ public:
                 glPushMatrix();
                 glTranslatef(start_pos.first + 0.5, 0, start_pos.second + 0.5);
                 podvozek.render();
-				glTranslatef(0,0.5,0);
+				
+				glPushMatrix();
+				glTranslatef(0,0.375,0);
                 draw_tyc((field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 1) - patro);
-				glTranslatef(0,(field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 1) - patro -0.5,0);
+				glPopMatrix();
+				
+				glTranslatef(0,(field[start_pos.first + path[path.size()-1].first][start_pos.second + path[path.size()-1].second].crates - 1) - patro,0);
 				plosina.render();
                 glPopMatrix();
+				break;
         }
-		
+		case WAIT:
+		{
+			if(!predej) {
+				state = MOVE_TO_BUILDING;
+				has_crate = true;
+				start_time = globalTime;
+		}
+					
+			glMatrixMode ( GL_MODELVIEW );
+            glPushMatrix();
+            glTranslatef(start_pos.first + 0.5, 0.5, start_pos.second + 0.5);
+            if (has_crate)
+                draw_crate();
+            glPopMatrix();
+
+            glPushMatrix();
+            glTranslatef(start_pos.first + 0.5, 0, start_pos.second + 0.5);
+            podvozek.render();
+			plosina.render();
+            glPopMatrix();		
+			break;
+		}
         }
 
 
@@ -822,8 +867,9 @@ void load_font() {
 
 
 void load_textures() {
-
-    load_texture("crate.png", &crate_texture);
+	crate_texture_index = textures_index;
+    load_texture("crate.png", textures+textures_index);
+	textures_index++;
 
 }
 
@@ -896,8 +942,8 @@ static void quit ( int code ) {
     }
 	if(objData)
 		delete ( objData );
-    if (crate_texture)
-        glDeleteTextures ( 1,&crate_texture );
+    if (textures)
+        glDeleteTextures ( 20,textures );
     /* Exit program. */
 	glDeleteLists(start_list, list_count);
     SDL_Quit();
@@ -952,7 +998,7 @@ static void process_events ( void ) {
 }
 
 void draw_crate() {
-    glBindTexture(GL_TEXTURE_2D, crate_texture);
+    glBindTexture(GL_TEXTURE_2D, textures[crate_texture_index]);
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     glBegin ( GL_QUADS);
     glNormal3f(0,0,1);
@@ -1174,7 +1220,6 @@ static void draw_screen ( void ) {
 // 	glutWireCube(2.0);
 
 
-draw_depo();
 
     draw_crates();
 	hand->render();
@@ -1210,6 +1255,7 @@ draw_depo();
 }
 
 void setup_texturing() {
+	glGenTextures(20, textures);
     glEnable ( GL_TEXTURE_2D );
 
 }
@@ -1220,10 +1266,8 @@ void setup_lighting() {
 
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
-    float l = 1.0;
-    glEnable(GL_COLOR_MATERIAL);
+//     glEnable(GL_COLOR_MATERIAL);
 
-    glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE,&l);
 
 
     GLfloat light_position[] = {0,10,10,1.0};//w=0:infinite

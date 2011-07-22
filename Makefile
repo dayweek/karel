@@ -66,14 +66,14 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd /home/david/skola/opengl/karel && $(CMAKE_COMMAND) -E cmake_progress_start /home/david/skola/opengl/karel/CMakeFiles /home/david/skola/opengl/karel/stb_image/CMakeFiles/progress.marks
-	cd /home/david/skola/opengl/karel && $(MAKE) -f CMakeFiles/Makefile2 stb_image/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/david/skola/opengl/karel/CMakeFiles /home/david/skola/opengl/karel/CMakeFiles/progress.marks
+	$(MAKE) -f CMakeFiles/Makefile2 all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/david/skola/opengl/karel/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /home/david/skola/opengl/karel && $(MAKE) -f CMakeFiles/Makefile2 stb_image/clean
+	$(MAKE) -f CMakeFiles/Makefile2 clean
 .PHONY : clean
 
 # The main clean target
@@ -82,56 +82,81 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /home/david/skola/opengl/karel && $(MAKE) -f CMakeFiles/Makefile2 stb_image/preinstall
+	$(MAKE) -f CMakeFiles/Makefile2 preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /home/david/skola/opengl/karel && $(MAKE) -f CMakeFiles/Makefile2 stb_image/preinstall
+	$(MAKE) -f CMakeFiles/Makefile2 preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /home/david/skola/opengl/karel && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	$(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
-# Convenience name for target.
-stb_image/CMakeFiles/stb_image.dir/rule:
-	cd /home/david/skola/opengl/karel && $(MAKE) -f CMakeFiles/Makefile2 stb_image/CMakeFiles/stb_image.dir/rule
-.PHONY : stb_image/CMakeFiles/stb_image.dir/rule
+#=============================================================================
+# Target rules for targets named karel
 
-# Convenience name for target.
-stb_image: stb_image/CMakeFiles/stb_image.dir/rule
+# Build rule for target.
+karel: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 karel
+.PHONY : karel
+
+# fast build rule for target.
+karel/fast:
+	$(MAKE) -f CMakeFiles/karel.dir/build.make CMakeFiles/karel.dir/build
+.PHONY : karel/fast
+
+#=============================================================================
+# Target rules for targets named objLoader
+
+# Build rule for target.
+objLoader: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 objLoader
+.PHONY : objLoader
+
+# fast build rule for target.
+objLoader/fast:
+	$(MAKE) -f objTester/CMakeFiles/objLoader.dir/build.make objTester/CMakeFiles/objLoader.dir/build
+.PHONY : objLoader/fast
+
+#=============================================================================
+# Target rules for targets named stb_image
+
+# Build rule for target.
+stb_image: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 stb_image
 .PHONY : stb_image
 
 # fast build rule for target.
 stb_image/fast:
-	cd /home/david/skola/opengl/karel && $(MAKE) -f stb_image/CMakeFiles/stb_image.dir/build.make stb_image/CMakeFiles/stb_image.dir/build
+	$(MAKE) -f stb_image/CMakeFiles/stb_image.dir/build.make stb_image/CMakeFiles/stb_image.dir/build
 .PHONY : stb_image/fast
 
-stb_image.o: stb_image.c.o
-.PHONY : stb_image.o
+main.o: main.cpp.o
+.PHONY : main.o
 
 # target to build an object file
-stb_image.c.o:
-	cd /home/david/skola/opengl/karel && $(MAKE) -f stb_image/CMakeFiles/stb_image.dir/build.make stb_image/CMakeFiles/stb_image.dir/stb_image.c.o
-.PHONY : stb_image.c.o
+main.cpp.o:
+	$(MAKE) -f CMakeFiles/karel.dir/build.make CMakeFiles/karel.dir/main.cpp.o
+.PHONY : main.cpp.o
 
-stb_image.i: stb_image.c.i
-.PHONY : stb_image.i
+main.i: main.cpp.i
+.PHONY : main.i
 
 # target to preprocess a source file
-stb_image.c.i:
-	cd /home/david/skola/opengl/karel && $(MAKE) -f stb_image/CMakeFiles/stb_image.dir/build.make stb_image/CMakeFiles/stb_image.dir/stb_image.c.i
-.PHONY : stb_image.c.i
+main.cpp.i:
+	$(MAKE) -f CMakeFiles/karel.dir/build.make CMakeFiles/karel.dir/main.cpp.i
+.PHONY : main.cpp.i
 
-stb_image.s: stb_image.c.s
-.PHONY : stb_image.s
+main.s: main.cpp.s
+.PHONY : main.s
 
 # target to generate assembly for a file
-stb_image.c.s:
-	cd /home/david/skola/opengl/karel && $(MAKE) -f stb_image/CMakeFiles/stb_image.dir/build.make stb_image/CMakeFiles/stb_image.dir/stb_image.c.s
-.PHONY : stb_image.c.s
+main.cpp.s:
+	$(MAKE) -f CMakeFiles/karel.dir/build.make CMakeFiles/karel.dir/main.cpp.s
+.PHONY : main.cpp.s
 
 # Help Target
 help:
@@ -140,11 +165,13 @@ help:
 	@echo "... clean"
 	@echo "... depend"
 	@echo "... edit_cache"
+	@echo "... karel"
 	@echo "... rebuild_cache"
+	@echo "... objLoader"
 	@echo "... stb_image"
-	@echo "... stb_image.o"
-	@echo "... stb_image.i"
-	@echo "... stb_image.s"
+	@echo "... main.o"
+	@echo "... main.i"
+	@echo "... main.s"
 .PHONY : help
 
 
@@ -156,6 +183,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /home/david/skola/opengl/karel && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	$(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

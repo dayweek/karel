@@ -1,13 +1,14 @@
 
 *.dep
+*.obj
 *.swp
 *.kate-swp
 *.*~
 *thumbs.db
 *.cmake
 
-/build/karel
-/build/CMakeCache.txt
+karel
+CMakeCache.txt
 
 CMakeFiles/
 

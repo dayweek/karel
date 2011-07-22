@@ -20,4 +20,5 @@ This is my school project. The aim of the course I attend is to learn fundamenta
 
 Textures used:
 http://forums.mapcore.net/viewtopic.php?t=1274&start=0
-License: Public Domain
+
+Other stuff license: Public Domain
